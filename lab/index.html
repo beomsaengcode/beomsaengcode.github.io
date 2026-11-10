@@ -1,0 +1,98 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>그림 실험실 · 범생코드</title><meta name="description" content="범생코드가 기술을 움직이는 그림으로 설명하는 15가지 방식"><link rel="canonical" href="https://beomsaengcode.github.io/lab/"><meta property="og:title" content="그림 실험실 · 범생코드"><meta property="og:description" content="범생코드가 기술을 움직이는 그림으로 설명하는 15가지 방식"><meta property="og:url" content="https://beomsaengcode.github.io/lab/"><meta property="og:site_name" content="범생코드"><style>.labs{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.lab{margin:0;border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden}
+.lab video{display:block;width:100%;aspect-ratio:9/16;background:#000;object-fit:cover}
+.lab figcaption{padding:12px 14px 16px;display:flex;flex-direction:column;gap:4px}
+.lab b{font-size:1.02rem}.lab span{color:var(--sub);font-size:.9rem}.lab small{color:var(--dim);font-size:.8rem;line-height:1.5}
+.intro{color:var(--sub);max-width:720px}.how{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.how li{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 14px;font-size:.94rem}
+.how b{color:var(--ai);font-family:"JetBrains Mono",monospace;margin-right:10px}
+@media (max-width:640px){.labs{grid-template-columns:1fr 1fr;gap:10px}.lab small{display:none}}</style><link rel="icon" href="/profile.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"><style>
+:root{--bg:#07090b;--panel:#0d1216;--panel2:#11181d;--line:#1f282f;--fg:#e8edf2;--sub:#a3adb9;--dim:#6b7684;
+--ai:#3dff8b;--pro:#ffb020;--news:#ff6b6b;--base:#e8edf2;--tip:#3dff8b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 Pretendard,"Malgun Gothic",sans-serif;
+background-image:radial-gradient(rgba(61,255,139,.05) 1.5px,transparent 1.5px);background-size:28px 28px}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono",Consolas,monospace}
+main{min-width:0;overflow-x:hidden;max-width:1040px;margin:0 auto;padding:32px 16px 72px}
+.top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.top img{width:84px;height:84px;border-radius:20px;border:3px solid var(--ai)}
+.top h1{margin:0;font-size:2rem;font-weight:900;letter-spacing:-.02em}.top h1 span{color:var(--ai)}
+.top p{margin:2px 0 0;color:var(--sub)}
+.links{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.links a{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;text-decoration:none;font-weight:700;font-size:.92rem}
+.links a:hover{border-color:var(--ai);color:var(--ai)}
+.term{margin:28px 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.term .bar{display:flex;gap:7px;align-items:center;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line);color:var(--dim);font-size:.85rem}
+.term .bar i{width:11px;height:11px;border-radius:50%;background:#2a333b}.term .bar i:first-child{background:#ff6b6b}.term .bar i:nth-child(2){background:#ffb020}.term .bar i:nth-child(3){background:#3dff8b}
+.term .bar span{margin-left:8px}
+.term ol{list-style:none;margin:0;padding:10px 0}
+.term li a{display:flex;gap:12px;padding:5px 16px;text-decoration:none;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term li a:hover{background:var(--panel2)}
+.term .h{color:var(--pro)}.term .t{flex:none}.term .m{overflow:hidden;text-overflow:ellipsis}
+h2{font-size:1.05rem;margin:44px 0 14px;color:var(--sub);font-weight:700}
+h2 b{color:var(--fg)}
+.tabs,.kw{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button,.kw button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 14px;font-size:.92rem;font-weight:700}
+.tabs button[aria-pressed=true],.kw button[aria-pressed=true]{color:#06110a;background:var(--ai);border-color:var(--ai)}
+.kw{margin-top:10px}.kw button{font-weight:500;padding:4px 12px;font-size:.86rem}
+.kw button small{color:var(--dim);margin-left:4px}.kw button[aria-pressed=true] small{color:#06110a}
+.search{margin-top:14px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:0 14px}
+.search span{color:var(--ai)}
+.search input{flex:1;min-width:0;background:none;border:0;color:var(--fg);font:inherit;padding:11px 0;outline:none}
+.grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+@media (max-width:640px){.grid{grid-template-columns:1fr 1fr;gap:10px}.card h3{font-size:.92rem}.card .in{padding:10px}.term .bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--ai);transform:translateY(-2px)}
+.card .th{aspect-ratio:4/5;background:#000 center 6%/cover no-repeat}
+.card .in{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:1.02rem;line-height:1.45;font-weight:800}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.82rem;color:var(--dim)}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.78rem;font-weight:800;color:#0b0b0b}
+.badge.ai{background:var(--ai)}.badge.pro{background:var(--pro)}.badge.news{background:var(--news)}
+.badge.base{background:none;color:var(--base);border:1px solid var(--base)}.badge.tip{background:none;color:var(--tip);border:1px solid var(--tip)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags a,.tags span{font-size:.8rem;color:var(--sub);text-decoration:none}
+.empty{color:var(--dim);padding:24px 0}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{white-space:nowrap;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}th{color:var(--dim);font-weight:600;font-size:.84rem}
+td.w{color:var(--ai);width:3.5em}td a{color:var(--ai)}td .no{color:var(--dim)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.88rem;display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim)}
+/* 글 */
+.post{max-width:760px}
+.crumb{overflow-wrap:anywhere;color:var(--dim);font-size:.88rem;text-decoration:none}.crumb:hover{color:var(--ai)}
+.post h1{overflow-wrap:anywhere;font-size:1.75rem;line-height:1.35;margin:10px 0 6px;font-weight:900;letter-spacing:-.01em}
+.post .en{color:var(--dim);margin:0 0 18px;font-size:.92rem}
+.video{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:18px 0}
+.video iframe{width:300px;max-width:100%;aspect-ratio:9/16;border:1px solid var(--line);border-radius:16px;background:#000}
+.video .lead{flex:1 1 240px;min-width:0}
+.lead p{margin:0 0 12px}
+.facts{margin:14px 0 0;padding:12px 16px;border-left:3px solid var(--ai);background:var(--panel);border-radius:0 10px 10px 0;list-style:none}
+.facts li{margin:4px 0}
+.src{color:var(--dim);font-size:.86rem;margin-top:10px}
+.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.steps li:before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--ai);font-weight:700}
+.memo{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px}
+.memo h3{margin:0 0 8px;font-size:1.02rem}.memo p{margin:6px 0;color:var(--sub)}
+.code{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ai);border-radius:14px;padding:14px 18px;text-decoration:none}
+.code b{color:var(--ai)}
+.rel{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.rel .card .th{aspect-ratio:16/10}
+@media (max-width:640px){.links{margin-left:0}.top h1{font-size:1.7rem}.post h1{font-size:1.45rem}.video iframe{width:100%;max-width:340px;margin:0 auto;display:block}.video{display:block}}
+</style></head><body><main><div class="top"><a href="/"><img src="/profile.png" alt="범생코드"></a><div><h1>범생<span>코드</span></h1><p>매일 쓰는 기술 뒤의 구조를 그림으로</p></div><nav class="links"><a href="/lab/">그림 실험실</a><a href="https://www.youtube.com/@범생코드">유튜브</a><a href="https://www.instagram.com/beomsaeng.code/">인스타그램</a><a href="https://github.com/beomsaengcode/bumsaeng-code">코드</a></nav></div>
+<h2><b>그림 실험실</b> · 같은 기술도 어떻게 그리느냐에 따라 다르게 보인다</h2>
+<p class="intro">범생코드 영상에 쓰는 움직이는 그림들이에요. 앞의 다섯 개는 같은 주제(주문이 몰릴 때 메시지 큐)를 서로 다른 방식으로 그렸고, 나머지는 주제마다 어울리는 방식을 골랐어요. 눌러서 재생해 보세요.</p>
+<h2><b>그리는 방식 15가지</b></h2>
+<div class="labs"><figure class="lab"><video src="v/iso.mp4" poster="p/iso.jpg" muted loop playsinline preload="none"></video><figcaption><b>아이소메트릭 블록</b><span>주문이 몰려도 큐가 받아 둔다</span><small>격자 좌표를 화면으로 바꿔 상자 면 3장을 그리고, 남은 개수로 쌓는 높이를 정한다</small></figcaption></figure><figure class="lab"><video src="v/board.mp4" poster="p/board.jpg" muted loop playsinline preload="none"></video><figcaption><b>화이트보드 손그림</b><span>주문이 몰려도 큐가 받아 둔다</span><small>떨림 있는 선을 길이만큼만 그려 손으로 그리는 느낌을 낸다</small></figcaption></figure><figure class="lab"><video src="v/tank.mp4" poster="p/tank.jpg" muted loop playsinline preload="none"></video><figcaption><b>물탱크</b><span>처리가 밀리면 큐에 차오른다</span><small>들어온 양과 나간 양을 더해 수위를 계산하고, 관 안 점선으로 흐름을 보인다</small></figcaption></figure><figure class="lab"><video src="v/seq.mp4" poster="p/seq.jpg" muted loop playsinline preload="none"></video><figcaption><b>시퀀스 다이어그램</b><span>사용자는 결제를 안 기다린다</span><small>세로 시간축을 따라 화살표가 차례로 뻗는다</small></figcaption></figure><figure class="lab"><video src="v/debug.mp4" poster="p/debug.jpg" muted loop playsinline preload="none"></video><figcaption><b>디버거</b><span>코드 한 줄씩 큐가 어떻게 바뀌나</span><small>실행 줄 표시와 변수 창을 같은 시간표로 움직인다</small></figcaption></figure><figure class="lab"><video src="v/metro.mp4" poster="p/metro.jpg" muted loop playsinline preload="none"></video><figcaption><b>지하철 노선도</b><span>요청 하나가 지나가는 노선</span><small>90°·45° 노선 위 열차 위치를 시간표로 계산하고 지나간 구간만 불을 켠다</small></figcaption></figure><figure class="lab"><video src="v/gitgraph.mp4" poster="p/gitgraph.jpg" muted loop playsinline preload="none"></video><figcaption><b>git 그래프</b><span>브랜치는 갈라졌다 합쳐진다</span><small>레인별 커밋 표에서 갈라짐·머지 선을 길이만큼 그린다</small></figcaption></figure><figure class="lab"><video src="v/pcb.mp4" poster="p/pcb.jpg" muted loop playsinline preload="none"></video><figcaption><b>회로 기판</b><span>데이터가 멀수록 이만큼 느려진다</span><small>구리선을 3겹으로 그리고 빛나는 신호가 꼬리를 끌며 달린다</small></figcaption></figure><figure class="lab"><video src="v/layers.mp4" poster="p/layers.jpg" muted loop playsinline preload="none"></video><figcaption><b>분해 레이어</b><span>주소창에 엔터를 치면 생기는 일</span><small>투명한 판이 벌어지고 패킷이 축을 따라 한 층씩 내려간다</small></figcaption></figure><figure class="lab"><video src="v/kinetic.mp4" poster="p/kinetic.jpg" muted loop playsinline preload="none"></video><figcaption><b>키네틱 글자</b><span>AI는 글자를 숫자로 읽는다</span><small>글자 간격과 칩 폭을 보간해 문장이 토큰으로 쪼개지고 뒤집힌다</small></figcaption></figure><figure class="lab"><video src="v/tiles.mp4" poster="p/tiles.jpg" muted loop playsinline preload="none"></video><figcaption><b>타일 뒤집기</b><span>찾는 데 한 번이면 되는 이유</span><small>타일을 가로로 눌러 반쯤에서 앞뒷면을 바꾼다</small></figcaption></figure><figure class="lab"><video src="v/graph.mp4" poster="p/graph.jpg" muted loop playsinline preload="none"></video><figcaption><b>노드 그래프</b><span>DB 하나 느려졌는데 전부 멈춘 이유</span><small>층마다 상태표를 두고 장애 신호가 거꾸로 번지게 한다</small></figcaption></figure><figure class="lab"><video src="v/dashboard.mp4" poster="p/dashboard.jpg" muted loop playsinline preload="none"></video><figcaption><b>모니터링 대시보드</b><span>평균은 멀쩡한데 사용자는 느리다</span><small>고리 버퍼로 끊김 없이 흐르는 차트와 히스토그램</small></figcaption></figure><figure class="lab"><video src="v/pixel.mp4" poster="p/pixel.jpg" muted loop playsinline preload="none"></video><figcaption><b>픽셀 아트</b><span>요청이 폭주해도 서버가 버티는 법</span><small>12px 격자 스프라이트를 초당 10걸음씩 뚝뚝 움직인다</small></figcaption></figure><figure class="lab"><video src="v/map.mp4" poster="p/map.jpg" muted loop playsinline preload="none"></video><figcaption><b>지도</b><span>멀리 있는 서버를 가까이 데려오는 법</span><small>대륙 윤곽을 점으로 찍고 곡선 경로 위로 혜성 꼬리가 난다</small></figcaption></figure></div>
+<h2><b>같은 방식, 다른 기술</b></h2>
+<div class="labs"><figure class="lab"><video src="v/kafka.mp4" poster="p/kafka.jpg" muted loop playsinline preload="none"></video><figcaption><b>Kafka vs RabbitMQ</b><span>읽은 메시지는 남을까 지워질까</span></figcaption></figure><figure class="lab"><video src="v/cache.mp4" poster="p/cache.jpg" muted loop playsinline preload="none"></video><figcaption><b>캐시</b><span>두 번째부터 빠른 이유</span></figcaption></figure><figure class="lab"><video src="v/lb.mp4" poster="p/lb.jpg" muted loop playsinline preload="none"></video><figcaption><b>로드밸런서</b><span>서버 한 대가 죽어도 안 멈추는 이유</span></figcaption></figure><figure class="lab"><video src="v/ratelimit.mp4" poster="p/ratelimit.jpg" muted loop playsinline preload="none"></video><figcaption><b>레이트 리미터</b><span>토큰 버킷으로 막는 법</span></figcaption></figure><figure class="lab"><video src="v/circuit.mp4" poster="p/circuit.jpg" muted loop playsinline preload="none"></video><figcaption><b>서킷 브레이커</b><span>망가진 서비스에 계속 보내지 않기</span></figcaption></figure><figure class="lab"><video src="v/rag.mp4" poster="p/rag.jpg" muted loop playsinline preload="none"></video><figcaption><b>RAG</b><span>AI가 우리 회사 문서로 답하는 법</span></figcaption></figure></div>
+<h2><b>어떻게 만드나</b></h2>
+<ol class="how"><li><b>01</b>대본을 줄마다 음성으로 만들고, 줄이 시작하는 시각을 잰다</li><li><b>02</b>그림 전체를 시간의 함수 하나로 그린다. 장면은 대사 시각에 묶어서 목소리에 자동으로 맞는다</li><li><b>03</b>브라우저를 화면 없이 띄워 1/30초씩 넘기며 무손실로 찍어 영상으로 묶는다</li><li><b>04</b>휴대폰에서 잘리는 자리까지 잘라 본 화면으로 겹침과 잘림을 확인한다</li></ol>
+<footer><span>© 범생코드</span><a href="https://github.com/beomsaengcode/bumsaeng-code">코드 저장소 (MIT)</a><a href="/privacy/">개인정보처리방침</a></footer></main>
+<script>
+const vs=[...document.querySelectorAll('.lab video')]
+const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting){v.preload='auto';v.play().catch(()=>{})}else v.pause()}),{threshold:.4})
+vs.forEach(v=>{io.observe(v);v.onclick=()=>v.paused?v.play():v.pause()})
+</script></body></html>
