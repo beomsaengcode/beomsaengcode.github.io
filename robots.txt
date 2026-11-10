@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://beomsaengcode.github.io/sitemap.xml
