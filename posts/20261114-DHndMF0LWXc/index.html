@@ -1,0 +1,83 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>글을 한 글자도 안 쓰는 AI, Gemini Decisions API · 범생코드</title><meta name="description" content="구글이 글을 쓰지 않는 모델 Gemini Decision 1을 냈어요. 답을 한 토큰씩 쓰는 대신, 정해 둔 보기마다 확률 점수만 한 번에 매겨요."><link rel="canonical" href="https://beomsaengcode.github.io/posts/20261114-DHndMF0LWXc/"><meta property="og:title" content="글을 한 글자도 안 쓰는 AI, Gemini Decisions API · 범생코드"><meta property="og:description" content="구글이 글을 쓰지 않는 모델 Gemini Decision 1을 냈어요. 답을 한 토큰씩 쓰는 대신, 정해 둔 보기마다 확률 점수만 한 번에 매겨요."><meta property="og:url" content="https://beomsaengcode.github.io/posts/20261114-DHndMF0LWXc/"><meta property="og:site_name" content="범생코드"><meta property="og:image" content="https://beomsaengcode.github.io/posts/20261114-DHndMF0LWXc/thumb.webp"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoObject", "name": "글을 한 글자도 안 쓰는 AI, Gemini Decisions API", "description": "구글이 글을 쓰지 않는 모델 Gemini Decision 1을 냈어요. 답을 한 토큰씩 쓰는 대신, 정해 둔 보기마다 확률 점수만 한 번에 매겨요.", "thumbnailUrl": "https://beomsaengcode.github.io/posts/20261114-DHndMF0LWXc/thumb.webp", "uploadDate": "2026-11-14T15:00:06.800800+09:00", "embedUrl": "https://www.youtube.com/embed/DHndMF0LWXc", "inLanguage": "ko"}</script><link rel="icon" href="/profile.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"><style>
+:root{--bg:#07090b;--panel:#0d1216;--panel2:#11181d;--line:#1f282f;--fg:#e8edf2;--sub:#a3adb9;--dim:#6b7684;
+--ai:#3dff8b;--pro:#ffb020;--news:#ff6b6b;--base:#e8edf2;--tip:#3dff8b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 Pretendard,"Malgun Gothic",sans-serif;
+background-image:radial-gradient(rgba(61,255,139,.05) 1.5px,transparent 1.5px);background-size:28px 28px}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono",Consolas,monospace}
+main{min-width:0;overflow-x:hidden;max-width:1040px;margin:0 auto;padding:32px 16px 72px}
+.top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.top img{width:84px;height:84px;border-radius:20px;border:3px solid var(--ai)}
+.top h1{margin:0;font-size:2rem;font-weight:900;letter-spacing:-.02em}.top h1 span{color:var(--ai)}
+.top p{margin:2px 0 0;color:var(--sub)}
+.links{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.links a{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;text-decoration:none;font-weight:700;font-size:.92rem}
+.links a:hover{border-color:var(--ai);color:var(--ai)}
+.term{margin:28px 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.term .bar{display:flex;gap:7px;align-items:center;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line);color:var(--dim);font-size:.85rem}
+.term .bar i{width:11px;height:11px;border-radius:50%;background:#2a333b}.term .bar i:first-child{background:#ff6b6b}.term .bar i:nth-child(2){background:#ffb020}.term .bar i:nth-child(3){background:#3dff8b}
+.term .bar span{margin-left:8px}
+.term ol{list-style:none;margin:0;padding:10px 0}
+.term li a{display:flex;gap:12px;padding:5px 16px;text-decoration:none;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term li a:hover{background:var(--panel2)}
+.term .h{color:var(--pro)}.term .t{flex:none}.term .m{overflow:hidden;text-overflow:ellipsis}
+h2{font-size:1.05rem;margin:44px 0 14px;color:var(--sub);font-weight:700}
+h2 b{color:var(--fg)}
+.tabs,.kw{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button,.kw button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 14px;font-size:.92rem;font-weight:700}
+.tabs button[aria-pressed=true],.kw button[aria-pressed=true]{color:#06110a;background:var(--ai);border-color:var(--ai)}
+.kw{margin-top:10px}.kw button{font-weight:500;padding:4px 12px;font-size:.86rem}
+.kw button small{color:var(--dim);margin-left:4px}.kw button[aria-pressed=true] small{color:#06110a}
+.search{margin-top:14px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:0 14px}
+.search span{color:var(--ai)}
+.search input{flex:1;min-width:0;background:none;border:0;color:var(--fg);font:inherit;padding:11px 0;outline:none}
+.grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+@media (max-width:640px){.grid{grid-template-columns:1fr 1fr;gap:10px}.card h3{font-size:.92rem}.card .in{padding:10px}.term .bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--ai);transform:translateY(-2px)}
+.card .th{aspect-ratio:4/5;background:#000 center 6%/cover no-repeat}
+.card .in{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:1.02rem;line-height:1.45;font-weight:800}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.82rem;color:var(--dim)}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.78rem;font-weight:800;color:#0b0b0b}
+.badge.ai{background:var(--ai)}.badge.pro{background:var(--pro)}.badge.news{background:var(--news)}
+.badge.base{background:none;color:var(--base);border:1px solid var(--base)}.badge.tip{background:none;color:var(--tip);border:1px solid var(--tip)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags a,.tags span{font-size:.8rem;color:var(--sub);text-decoration:none}
+.empty{color:var(--dim);padding:24px 0}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{white-space:nowrap;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}th{color:var(--dim);font-weight:600;font-size:.84rem}
+td.w{color:var(--ai);width:3.5em}td a{color:var(--ai)}td .no{color:var(--dim)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.88rem;display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim)}
+/* 글 */
+.post{max-width:760px}
+.crumb{overflow-wrap:anywhere;color:var(--dim);font-size:.88rem;text-decoration:none}.crumb:hover{color:var(--ai)}
+.post h1{overflow-wrap:anywhere;font-size:1.75rem;line-height:1.35;margin:10px 0 6px;font-weight:900;letter-spacing:-.01em}
+.post .en{color:var(--dim);margin:0 0 18px;font-size:.92rem}
+.video{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:18px 0}
+.video iframe{width:300px;max-width:100%;aspect-ratio:9/16;border:1px solid var(--line);border-radius:16px;background:#000}
+.video .lead{flex:1 1 240px;min-width:0}
+.lead p{margin:0 0 12px}
+.facts{margin:14px 0 0;padding:12px 16px;border-left:3px solid var(--ai);background:var(--panel);border-radius:0 10px 10px 0;list-style:none}
+.facts li{margin:4px 0}
+.src{color:var(--dim);font-size:.86rem;margin-top:10px}
+.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.steps li:before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--ai);font-weight:700}
+.memo{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px}
+.memo h3{margin:0 0 8px;font-size:1.02rem}.memo p{margin:6px 0;color:var(--sub)}
+.code{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ai);border-radius:14px;padding:14px 18px;text-decoration:none}
+.code b{color:var(--ai)}
+.rel{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.rel .card .th{aspect-ratio:16/10}
+@media (max-width:640px){.links{margin-left:0}.top h1{font-size:1.7rem}.post h1{font-size:1.45rem}.video iframe{width:100%;max-width:340px;margin:0 auto;display:block}.video{display:block}}
+</style></head><body><main class="post"><div class="top"><a href="/"><img src="/profile.png" alt="범생코드"></a><div><h1>범생<span>코드</span></h1><p>매일 쓰는 기술 뒤의 구조를 그림으로</p></div><nav class="links"><a href="https://www.youtube.com/@범생코드">유튜브</a><a href="https://www.instagram.com/beomsaeng.code/">인스타그램</a><a href="https://github.com/beomsaengcode/bumsaeng-code">코드</a></nav></div>
+<p style="margin-top:28px"><a class="crumb mono" href="/">~/beomsaengcode/posts/20261114-DHndMF0LWXc</a></p>
+<div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.14</span><span class="tags"><a href="/#LLM">#LLM</a><a href="/#Gemini">#Gemini</a><a href="/#라우팅">#라우팅</a><a href="/#AI 비용">#AI 비용</a><a href="/#에이전트">#에이전트</a></span></div>
+<h1>글을 한 글자도 안 쓰는 AI, Gemini Decisions API</h1><p class="en">An AI that writes nothing: Gemini Decisions API</p>
+<div class="video"><iframe src="https://www.youtube.com/embed/DHndMF0LWXc" title="글을 한 글자도 안 쓰는 AI, Gemini Decisions API" loading="lazy" allowfullscreen></iframe>
+<div class="lead"><p>구글이 글을 쓰지 않는 모델 Gemini Decision 1을 냈어요. 답을 한 토큰씩 쓰는 대신, 정해 둔 보기마다 확률 점수만 한 번에 매겨요.</p><p>그래서 출력 토큰은 0원, 입력만 백만 토큰당 0.10달러이고, 응답은 0.15~0.25초예요. 입력 하나에 질문을 최대 1,000개까지 한 번에 물을 수 있어요.</p><p>치킨집 문의를 배달·환불·메뉴로 나누고, 확신 점수가 낮으면 사람 상담원에게 넘기는 식으로 써요. 고르는 일은 Decision에, 글 쓰는 일은 일반 LLM에.</p><ul class="facts"><li>가격: 입력 100만 토큰당 0.10달러, 출력 토큰 과금 없음</li><li>응답: 끝에서 끝까지 150~250ms</li><li>질문: 입력 하나(최대 256K 토큰)에 최대 1,000개 (예/아니오, 객관식, 루브릭 점수)</li><li>구글 발표: 같은 평가 모음 기준 Gemini 3.5 Flash-Lite보다 약 5배 저렴</li></ul><p class="src">출처: Google DeepMind 공식 발표 &quot;Gemini Decisions API&quot; (2026.11.11)</p>
+<p class="src"><a href="https://youtu.be/DHndMF0LWXc">유튜브에서 보기</a> · <a href="https://www.instagram.com/reel/DfthDZ-mUR0/">인스타 릴스</a></p></div></div>
+<h2><b>장면 순서</b></h2><ol class="steps"><li><span>글을 안 쓰는 AI가 나왔다</span></li><li><span>답 대신 보기마다 점수</span></li><li><span>토큰을 하나씩 안 뽑는다</span></li><li><span>출력 토큰 0원</span></li><li><span>응답은 0.2초 안팎</span></li><li><span>질문 1,000개를 한 번에</span></li><li><span>치킨집 문의 자동 분류</span></li><li><span>자신 없으면 사람에게</span></li><li><span>구글 발표 약 5배 저렴</span></li><li><span>고르기는 Decision, 쓰기는 LLM</span></li><li><span>구독하면 새 모델 바로 정리</span></li></ol><h2><b>메모</b> · 영상에 다 못 넣은 것</h2><div class="memo"><h3>어디에 쓰면 좋냐면</h3><p>챗봇 앞단에서 &#x27;이 질문 어느 팀/어느 모델로 보낼까&#x27;, &#x27;정책 위반인가&#x27;, &#x27;어떤 도구를 쓸까&#x27; 같은 고르기만 맡기면 됨</p><p>확신 점수(0~1)가 같이 나와서, 0.7 아래면 사람에게 넘기는 식으로 기준을 코드에 박아 두기 좋음</p><p>쉽게 말하면 &#x27;말 많은 직원 대신 분류만 빠르게 하는 접수 담당&#x27;</p><p>다만 글을 써야 하는 답변 자체는 여전히 일반 모델 몫이라고</p></div><h2><b>같은 키워드 글</b></h2><div class="rel"><a class="card" href="../../posts/20261113-GkLnsUfV7sM/" data-type="새소식" data-kw="LLM|Gemini|AI 비용|에이전트|라우팅" data-q="argon보다 똑똑한데 더 싸다, gemini 4 hydrogen llm gemini ai 비용 에이전트 라우팅"><div class="th" style="background-image:url(../../posts/20261113-GkLnsUfV7sM/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.13</span></div><h3>Argon보다 똑똑한데 더 싸다, Gemini 4 Hydrogen</h3><div class="tags"><span>#LLM</span><span>#Gemini</span><span>#AI 비용</span><span>#에이전트</span><span>#라우팅</span></div></div></a><a class="card" href="../../posts/20261112-H6XOyvuy4lA/" data-type="새소식" data-kw="LLM|AI 비용|Gemini|Claude|생각 토큰" data-q="fable 5.2의 1/4 값, gemini 4 carbon 실력은? 단 12월부터 2배 llm ai 비용 gemini claude 생각 토큰"><div class="th" style="background-image:url(../../posts/20261112-H6XOyvuy4lA/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.12</span></div><h3>Fable 5.2의 1/4 값, Gemini 4 Carbon 실력은? 단 12월부터 2배</h3><div class="tags"><span>#LLM</span><span>#AI 비용</span><span>#Gemini</span><span>#Claude</span><span>#생각 토큰</span></div></div></a><a class="card" href="../../posts/20261110-Iz75eSTnJRA/" data-type="새소식" data-kw="LLM|AI 비용|Claude|OpenAI|라우터" data-q="같은 시험인데 비용 28배, claude fable 5.2 vs gpt-6.1 terra llm ai 비용 claude openai 라우터"><div class="th" style="background-image:url(../../posts/20261110-Iz75eSTnJRA/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.10</span></div><h3>같은 시험인데 비용 28배, Claude Fable 5.2 vs GPT-6.1 Terra</h3><div class="tags"><span>#LLM</span><span>#AI 비용</span><span>#Claude</span><span>#OpenAI</span><span>#라우터</span></div></div></a></div><footer><span>© 범생코드</span><a href="https://github.com/beomsaengcode/bumsaeng-code">코드 저장소 (MIT)</a><a href="/privacy/">개인정보처리방침</a></footer></main></body></html>
