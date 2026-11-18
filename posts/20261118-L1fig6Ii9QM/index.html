@@ -1,0 +1,83 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>대화가 길수록 API 요금이 계단처럼 오른 이유 · 장애 일지 · 범생코드</title><meta name="description" content="챗봇을 열었더니 대화가 길어질수록 API 요금이 계단처럼 올랐어요."><link rel="canonical" href="https://beomsaengcode.github.io/posts/20261118-L1fig6Ii9QM/"><meta property="og:title" content="대화가 길수록 API 요금이 계단처럼 오른 이유 · 장애 일지 · 범생코드"><meta property="og:description" content="챗봇을 열었더니 대화가 길어질수록 API 요금이 계단처럼 올랐어요."><meta property="og:url" content="https://beomsaengcode.github.io/posts/20261118-L1fig6Ii9QM/"><meta property="og:site_name" content="범생코드"><meta property="og:image" content="https://beomsaengcode.github.io/posts/20261118-L1fig6Ii9QM/thumb.webp"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoObject", "name": "대화가 길수록 API 요금이 계단처럼 오른 이유 · 장애 일지", "description": "챗봇을 열었더니 대화가 길어질수록 API 요금이 계단처럼 올랐어요.", "thumbnailUrl": "https://beomsaengcode.github.io/posts/20261118-L1fig6Ii9QM/thumb.webp", "uploadDate": "2026-11-18T11:00:07.522679+09:00", "embedUrl": "https://www.youtube.com/embed/L1fig6Ii9QM", "inLanguage": "ko"}</script><link rel="icon" href="/profile.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"><style>
+:root{--bg:#07090b;--panel:#0d1216;--panel2:#11181d;--line:#1f282f;--fg:#e8edf2;--sub:#a3adb9;--dim:#6b7684;
+--ai:#3dff8b;--pro:#ffb020;--news:#ff6b6b;--base:#e8edf2;--tip:#3dff8b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 Pretendard,"Malgun Gothic",sans-serif;
+background-image:radial-gradient(rgba(61,255,139,.05) 1.5px,transparent 1.5px);background-size:28px 28px}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono",Consolas,monospace}
+main{min-width:0;overflow-x:hidden;max-width:1040px;margin:0 auto;padding:32px 16px 72px}
+.top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.top img{width:84px;height:84px;border-radius:20px;border:3px solid var(--ai)}
+.top h1{margin:0;font-size:2rem;font-weight:900;letter-spacing:-.02em}.top h1 span{color:var(--ai)}
+.top p{margin:2px 0 0;color:var(--sub)}
+.links{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.links a{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;text-decoration:none;font-weight:700;font-size:.92rem}
+.links a:hover{border-color:var(--ai);color:var(--ai)}
+.term{margin:28px 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.term .bar{display:flex;gap:7px;align-items:center;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line);color:var(--dim);font-size:.85rem}
+.term .bar i{width:11px;height:11px;border-radius:50%;background:#2a333b}.term .bar i:first-child{background:#ff6b6b}.term .bar i:nth-child(2){background:#ffb020}.term .bar i:nth-child(3){background:#3dff8b}
+.term .bar span{margin-left:8px}
+.term ol{list-style:none;margin:0;padding:10px 0}
+.term li a{display:flex;gap:12px;padding:5px 16px;text-decoration:none;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term li a:hover{background:var(--panel2)}
+.term .h{color:var(--pro)}.term .t{flex:none}.term .m{overflow:hidden;text-overflow:ellipsis}
+h2{font-size:1.05rem;margin:44px 0 14px;color:var(--sub);font-weight:700}
+h2 b{color:var(--fg)}
+.tabs,.kw{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button,.kw button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 14px;font-size:.92rem;font-weight:700}
+.tabs button[aria-pressed=true],.kw button[aria-pressed=true]{color:#06110a;background:var(--ai);border-color:var(--ai)}
+.kw{margin-top:10px}.kw button{font-weight:500;padding:4px 12px;font-size:.86rem}
+.kw button small{color:var(--dim);margin-left:4px}.kw button[aria-pressed=true] small{color:#06110a}
+.search{margin-top:14px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:0 14px}
+.search span{color:var(--ai)}
+.search input{flex:1;min-width:0;background:none;border:0;color:var(--fg);font:inherit;padding:11px 0;outline:none}
+.grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+@media (max-width:640px){.grid{grid-template-columns:1fr 1fr;gap:10px}.card h3{font-size:.92rem}.card .in{padding:10px}.term .bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--ai);transform:translateY(-2px)}
+.card .th{aspect-ratio:4/5;background:#000 center 6%/cover no-repeat}
+.card .in{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:1.02rem;line-height:1.45;font-weight:800}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.82rem;color:var(--dim)}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.78rem;font-weight:800;color:#0b0b0b}
+.badge.ai{background:var(--ai)}.badge.pro{background:var(--pro)}.badge.news{background:var(--news)}
+.badge.base{background:none;color:var(--base);border:1px solid var(--base)}.badge.tip{background:none;color:var(--tip);border:1px solid var(--tip)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags a,.tags span{font-size:.8rem;color:var(--sub);text-decoration:none}
+.empty{color:var(--dim);padding:24px 0}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{white-space:nowrap;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}th{color:var(--dim);font-weight:600;font-size:.84rem}
+td.w{color:var(--ai);width:3.5em}td a{color:var(--ai)}td .no{color:var(--dim)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.88rem;display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim)}
+/* 글 */
+.post{max-width:760px}
+.crumb{overflow-wrap:anywhere;color:var(--dim);font-size:.88rem;text-decoration:none}.crumb:hover{color:var(--ai)}
+.post h1{overflow-wrap:anywhere;font-size:1.75rem;line-height:1.35;margin:10px 0 6px;font-weight:900;letter-spacing:-.01em}
+.post .en{color:var(--dim);margin:0 0 18px;font-size:.92rem}
+.video{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:18px 0}
+.video iframe{width:300px;max-width:100%;aspect-ratio:9/16;border:1px solid var(--line);border-radius:16px;background:#000}
+.video .lead{flex:1 1 240px;min-width:0}
+.lead p{margin:0 0 12px}
+.facts{margin:14px 0 0;padding:12px 16px;border-left:3px solid var(--ai);background:var(--panel);border-radius:0 10px 10px 0;list-style:none}
+.facts li{margin:4px 0}
+.src{color:var(--dim);font-size:.86rem;margin-top:10px}
+.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.steps li:before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--ai);font-weight:700}
+.memo{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px}
+.memo h3{margin:0 0 8px;font-size:1.02rem}.memo p{margin:6px 0;color:var(--sub)}
+.code{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ai);border-radius:14px;padding:14px 18px;text-decoration:none}
+.code b{color:var(--ai)}
+.rel{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.rel .card .th{aspect-ratio:16/10}
+@media (max-width:640px){.links{margin-left:0}.top h1{font-size:1.7rem}.post h1{font-size:1.45rem}.video iframe{width:100%;max-width:340px;margin:0 auto;display:block}.video{display:block}}
+</style></head><body><main class="post"><div class="top"><a href="/"><img src="/profile.png" alt="범생코드"></a><div><h1>범생<span>코드</span></h1><p>매일 쓰는 기술 뒤의 구조를 그림으로</p></div><nav class="links"><a href="https://www.youtube.com/@범생코드">유튜브</a><a href="https://www.instagram.com/beomsaeng.code/">인스타그램</a><a href="https://github.com/beomsaengcode/beomsaeng-code">코드</a></nav></div>
+<p style="margin-top:28px"><a class="crumb mono" href="/">~/beomsaengcode/posts/20261118-L1fig6Ii9QM</a></p>
+<div class="meta"><span class="badge pro">실무</span><span class="mono">2026.11.18</span><span class="tags"><a href="/#LLM API">#LLM API</a><a href="/#프롬프트 캐싱">#프롬프트 캐싱</a><a href="/#토큰 비용">#토큰 비용</a><a href="/#장애 일지">#장애 일지</a></span></div>
+<h1>대화가 길수록 API 요금이 계단처럼 오른 이유 · 장애 일지</h1><p class="en">Why your LLM API bill climbs like stairs · Incident log #2</p>
+<div class="video"><iframe src="https://www.youtube.com/embed/L1fig6Ii9QM" title="대화가 길수록 API 요금이 계단처럼 오른 이유 · 장애 일지" loading="lazy" allowfullscreen></iframe>
+<div class="lead"><p>챗봇을 열었더니 대화가 길어질수록 API 요금이 계단처럼 올랐어요.</p><p>LLM API는 앞 대화를 기억하지 못해서, 요청마다 지금까지의 대화 전체를 다시 보내요. 주고받는 양이 같다고 치면 10번 대화하는 동안 보내는 입력은 처음의 10배가 아니라 55배(1+2+…+10)예요.</p><p>해결 1. 오래된 대화는 요약 한 덩어리로 줄여서 보낸다.</p><p>해결 2. 프롬프트 캐싱. 앞부분이 똑같으면 서버가 저장해 둔 걸 다시 쓰고, Anthropic 공식 가격 기준 캐시에서 읽은 입력은 기본 입력 값의 10분의 1 이하예요(모델마다 다름, 처음 저장할 때는 조금 더 비쌈).</p><p>단, 시스템 프롬프트 같은 앞부분이 한 글자라도 바뀌면 캐시가 깨져요. 고정할 건 앞에, 바뀌는 건 뒤에.</p><p>요금이 이상하면 로그에서 요청마다 input_tokens와 cache_read_input_tokens부터 확인하세요.</p>
+<p class="src"><a href="https://youtu.be/L1fig6Ii9QM">유튜브에서 보기</a> · <a href="https://www.instagram.com/reel/Df3YoCajhqR/">인스타 릴스</a></p></div></div>
+<h2><b>장면 순서</b></h2><ol class="steps"><li><span>대화가 길수록 요금이 계단처럼</span></li><li><span>API는 앞 대화를 기억 못 한다</span></li><li><span>보낼 때마다 한 층씩</span></li><li><span>10번이면 10배가 아니라 55배</span></li><li><span>범인은 다시 읽는 입력</span></li><li><span>해결 1: 오래된 대화는 요약</span></li><li><span>해결 2: 프롬프트 캐싱</span></li><li><span>캐시로 읽으면 10분의 1 이하</span></li><li><span>앞부분이 바뀌면 캐시가 깨진다</span></li><li><span>요금이 이상하면 입력 토큰부터</span></li></ol><h2><b>메모</b> · 영상에 다 못 넣은 것</h2><div class="memo"><h3>캐시는 오래 안 남아요</h3><p>앤트로픽 기본은 5분(쓸 때마다 다시 늘어남), 1시간짜리는 저장 값이 더 비쌈</p><p>그래서 사람이 한참 쉬었다 이어 쓰는 챗봇이면 캐시가 식어서 다시 비싸질 수 있음</p><p>요청 로그의 cache_read_input_tokens가 0으로 떨어지는 구간을 찾아보세요</p></div><footer><span>© 범생코드</span><a href="https://github.com/beomsaengcode/beomsaeng-code">코드 저장소 (MIT)</a><a href="/privacy/">개인정보처리방침</a></footer></main></body></html>
