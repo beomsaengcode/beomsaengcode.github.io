@@ -1,0 +1,83 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI가 PR 승인까지 한다, 켜기 전 잠글 3곳 · 범생코드</title><meta name="description" content="Anthropic이 11/23 Claude Ship(베타)을 발표했어요. AI가 코드 리뷰, 수정, 승인까지 해요."><link rel="canonical" href="https://beomsaengcode.github.io/posts/20261126-uN4Rkn-MfSE/"><meta property="og:title" content="AI가 PR 승인까지 한다, 켜기 전 잠글 3곳 · 범생코드"><meta property="og:description" content="Anthropic이 11/23 Claude Ship(베타)을 발표했어요. AI가 코드 리뷰, 수정, 승인까지 해요."><meta property="og:url" content="https://beomsaengcode.github.io/posts/20261126-uN4Rkn-MfSE/"><meta property="og:site_name" content="범생코드"><meta property="og:image" content="https://beomsaengcode.github.io/posts/20261126-uN4Rkn-MfSE/thumb.webp"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "VideoObject", "name": "AI가 PR 승인까지 한다, 켜기 전 잠글 3곳", "description": "Anthropic이 11/23 Claude Ship(베타)을 발표했어요. AI가 코드 리뷰, 수정, 승인까지 해요.", "thumbnailUrl": "https://beomsaengcode.github.io/posts/20261126-uN4Rkn-MfSE/thumb.webp", "uploadDate": "2026-11-26T19:00:06.875998+09:00", "embedUrl": "https://www.youtube.com/embed/uN4Rkn-MfSE", "inLanguage": "ko"}</script><link rel="icon" href="/profile.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"><style>
+:root{--bg:#07090b;--panel:#0d1216;--panel2:#11181d;--line:#1f282f;--fg:#e8edf2;--sub:#a3adb9;--dim:#6b7684;
+--ai:#3dff8b;--pro:#ffb020;--news:#ff6b6b;--base:#e8edf2;--tip:#3dff8b;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 Pretendard,"Malgun Gothic",sans-serif;
+background-image:radial-gradient(rgba(61,255,139,.05) 1.5px,transparent 1.5px);background-size:28px 28px}
+a{color:inherit}
+.mono{font-family:"JetBrains Mono",Consolas,monospace}
+main{min-width:0;overflow-x:hidden;max-width:1040px;margin:0 auto;padding:32px 16px 72px}
+.top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.top img{width:84px;height:84px;border-radius:20px;border:3px solid var(--ai)}
+.top h1{margin:0;font-size:2rem;font-weight:900;letter-spacing:-.02em}.top h1 span{color:var(--ai)}
+.top p{margin:2px 0 0;color:var(--sub)}
+.links{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.links a{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 14px;text-decoration:none;font-weight:700;font-size:.92rem}
+.links a:hover{border-color:var(--ai);color:var(--ai)}
+.term{margin:28px 0 8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}
+.term .bar{display:flex;gap:7px;align-items:center;padding:10px 14px;background:var(--panel2);border-bottom:1px solid var(--line);color:var(--dim);font-size:.85rem}
+.term .bar i{width:11px;height:11px;border-radius:50%;background:#2a333b}.term .bar i:first-child{background:#ff6b6b}.term .bar i:nth-child(2){background:#ffb020}.term .bar i:nth-child(3){background:#3dff8b}
+.term .bar span{margin-left:8px}
+.term ol{list-style:none;margin:0;padding:10px 0}
+.term li a{display:flex;gap:12px;padding:5px 16px;text-decoration:none;font-size:.93rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term li a:hover{background:var(--panel2)}
+.term .h{color:var(--pro)}.term .t{flex:none}.term .m{overflow:hidden;text-overflow:ellipsis}
+h2{font-size:1.05rem;margin:44px 0 14px;color:var(--sub);font-weight:700}
+h2 b{color:var(--fg)}
+.tabs,.kw{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button,.kw button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--sub);border-radius:999px;padding:6px 14px;font-size:.92rem;font-weight:700}
+.tabs button[aria-pressed=true],.kw button[aria-pressed=true]{color:#06110a;background:var(--ai);border-color:var(--ai)}
+.kw{margin-top:10px}.kw button{font-weight:500;padding:4px 12px;font-size:.86rem}
+.kw button small{color:var(--dim);margin-left:4px}.kw button[aria-pressed=true] small{color:#06110a}
+.search{margin-top:14px;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:0 14px}
+.search span{color:var(--ai)}
+.search input{flex:1;min-width:0;background:none;border:0;color:var(--fg);font:inherit;padding:11px 0;outline:none}
+.grid{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+@media (max-width:640px){.grid{grid-template-columns:1fr 1fr;gap:10px}.card h3{font-size:.92rem}.card .in{padding:10px}.term .bar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.card{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--panel);border-radius:16px;overflow:hidden;text-decoration:none;transition:border-color .15s,transform .15s}
+.card:hover{border-color:var(--ai);transform:translateY(-2px)}
+.card .th{aspect-ratio:4/5;background:#000 center 6%/cover no-repeat}
+.card .in{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:1.02rem;line-height:1.45;font-weight:800}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.82rem;color:var(--dim)}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.78rem;font-weight:800;color:#0b0b0b}
+.badge.ai{background:var(--ai)}.badge.pro{background:var(--pro)}.badge.news{background:var(--news)}
+.badge.base{background:none;color:var(--base);border:1px solid var(--base)}.badge.tip{background:none;color:var(--tip);border:1px solid var(--tip)}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags a,.tags span{font-size:.8rem;color:var(--sub);text-decoration:none}
+.empty{color:var(--dim);padding:24px 0}
+table{width:100%;border-collapse:collapse;font-size:.94rem}
+th,td{white-space:nowrap;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}th{color:var(--dim);font-weight:600;font-size:.84rem}
+td.w{color:var(--ai);width:3.5em}td a{color:var(--ai)}td .no{color:var(--dim)}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--dim);font-size:.88rem;display:flex;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim)}
+/* 글 */
+.post{max-width:760px}
+.crumb{overflow-wrap:anywhere;color:var(--dim);font-size:.88rem;text-decoration:none}.crumb:hover{color:var(--ai)}
+.post h1{overflow-wrap:anywhere;font-size:1.75rem;line-height:1.35;margin:10px 0 6px;font-weight:900;letter-spacing:-.01em}
+.post .en{color:var(--dim);margin:0 0 18px;font-size:.92rem}
+.video{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap;margin:18px 0}
+.video iframe{width:300px;max-width:100%;aspect-ratio:9/16;border:1px solid var(--line);border-radius:16px;background:#000}
+.video .lead{flex:1 1 240px;min-width:0}
+.lead p{margin:0 0 12px}
+.facts{margin:14px 0 0;padding:12px 16px;border-left:3px solid var(--ai);background:var(--panel);border-radius:0 10px 10px 0;list-style:none}
+.facts li{margin:4px 0}
+.src{color:var(--dim);font-size:.86rem;margin-top:10px}
+.steps{list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:14px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.steps li:before{content:counter(s,decimal-leading-zero);font-family:"JetBrains Mono",monospace;color:var(--ai);font-weight:700}
+.memo{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px}
+.memo h3{margin:0 0 8px;font-size:1.02rem}.memo p{margin:6px 0;color:var(--sub)}
+.code{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--ai);border-radius:14px;padding:14px 18px;text-decoration:none}
+.code b{color:var(--ai)}
+.rel{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.rel .card .th{aspect-ratio:16/10}
+@media (max-width:640px){.links{margin-left:0}.top h1{font-size:1.7rem}.post h1{font-size:1.45rem}.video iframe{width:100%;max-width:340px;margin:0 auto;display:block}.video{display:block}}
+</style></head><body><main class="post"><div class="top"><a href="/"><img src="/profile.png" alt="범생코드"></a><div><h1>범생<span>코드</span></h1><p>매일 쓰는 기술 뒤의 구조를 그림으로</p></div><nav class="links"><a href="https://www.youtube.com/@범생코드">유튜브</a><a href="https://www.instagram.com/beomsaeng.code/">인스타그램</a><a href="https://github.com/beomsaengcode/beomsaeng-code">코드</a></nav></div>
+<p style="margin-top:28px"><a class="crumb mono" href="/">~/beomsaengcode/posts/20261126-uN4Rkn-MfSE</a></p>
+<div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.26</span><span class="tags"><a href="/#Claude Ship">#Claude Ship</a><a href="/#코드리뷰">#코드리뷰</a><a href="/#GitHub">#GitHub</a><a href="/#Claude">#Claude</a></span></div>
+<h1>AI가 PR 승인까지 한다, 켜기 전 잠글 3곳</h1><p class="en">Claude Ship: AI now approves PRs. Lock these 3 things first</p>
+<div class="video"><iframe src="https://www.youtube.com/embed/uN4Rkn-MfSE" title="AI가 PR 승인까지 한다, 켜기 전 잠글 3곳" loading="lazy" allowfullscreen></iframe>
+<div class="lead"><p>Anthropic이 11/23 Claude Ship(베타)을 발표했어요. AI가 코드 리뷰, 수정, 승인까지 해요.</p><p>구성 4개</p><p>위험: GitHub는 Claude의 승인도 승인 1개로 셀 수 있어요. 자동 머지나 머지 큐까지 켜 두면 아무도 안 눌렀는데 합쳐질 수 있다고 공식 문서에 적혀 있어요.</p><p>켜기 전 잠글 곳 3가지 (저장해 두세요)</p><p>① 정책에 사람 1명 필수: seats: [{ count: 1, from: [humans, &quot;!pr/authors&quot;] }]</p><p>② 처음엔 지켜보기(observe) 모드: 판단만 보여 주고 승인·막기는 안 해요. 이 모드도 요금이 나가요</p><p>③ PR Steward 지출 한도: 정하기 전엔 한도가 없어요. 조직 설정 &gt; Usage &gt; PR Steward</p><p>Team·Enterprise 플랜, github.com만 돼요. 공식 문서도 버그·보안 문제를 놓칠 수 있다고 적어 뒀어요.</p><p>https://code.claude.com/docs/en/claude-ship</p><p>https://code.claude.com/docs/en/approvals-github-rules</p><ul class="facts"><li>/ship: 내 PC에서 push → PR 올리기</li><li>Code Review: 버그 찾기 (정식)</li><li>PR Steward: CI 실패·충돌·리뷰 댓글을 고쳐서 push (베타)</li><li>Claude Approvals: 팀 정책 파일대로 승인 (베타)</li></ul><p class="src">출처: https://claude.com/resources/articles/introducing-claude-ship</p>
+<p class="src"><a href="https://youtu.be/uN4Rkn-MfSE">유튜브에서 보기</a> · <a href="https://www.instagram.com/reel/DgM17SAB-Q9/">인스타 릴스</a></p></div></div>
+<h2><b>장면 순서</b></h2><ol class="steps"><li><span>AI 승인도 승인 1개</span></li><li><span>Claude Ship: 리뷰·수정·승인</span></li><li><span>켜기 전 잠글 곳 3가지</span></li><li><span>① 사람 1명은 꼭</span></li><li><span>② 처음엔 지켜보기</span></li><li><span>③ 지출 한도 먼저</span></li><li><span>출처: 공식 문서</span></li></ol><h2><b>메모</b> · 영상에 다 못 넣은 것</h2><div class="memo"><h3>켜기 전 잠글 3곳</h3><p>① 정책에 사람 1명 필수 (작성자 말고)</p><p>② 처음엔 지켜보기 모드</p><p>③ PR Steward 지출 한도 (정하기 전엔 없음)</p></div><h2><b>같은 키워드 글</b></h2><div class="rel"><a class="card" href="../../posts/20261125-S8TskExibu4/" data-type="새소식" data-kw="리만가설|암호|RSA|Claude" data-q="리만가설 풀리면 내 비밀번호 뚫리나? 리만가설 암호 rsa claude"><div class="th" style="background-image:url(../../posts/20261125-S8TskExibu4/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.25</span></div><h3>리만가설 풀리면 내 비밀번호 뚫리나?</h3><div class="tags"><span>#리만가설</span><span>#암호</span><span>#RSA</span><span>#Claude</span></div></div></a><a class="card" href="../../posts/20261124-t4EEvx1qN-k/" data-type="실무" data-kw="Claude|멀티에이전트|AI 코딩|모델 순서" data-q="ai 팀플, 조장만 바꿨더니 claude 멀티에이전트 ai 코딩 모델 순서"><div class="th" style="background-image:url(../../posts/20261124-t4EEvx1qN-k/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge pro">실무</span><span class="mono">2026.11.24</span></div><h3>AI 팀플, 조장만 바꿨더니</h3><div class="tags"><span>#Claude</span><span>#멀티에이전트</span><span>#AI 코딩</span><span>#모델 순서</span></div></div></a><a class="card" href="../../posts/20261122-eNPKSpYXIFk/" data-type="새소식" data-kw="리만가설|Claude|Lean|AI 수학" data-q="리만가설, 기계는 맞대요. 사람은 아직? 리만가설 claude lean ai 수학"><div class="th" style="background-image:url(../../posts/20261122-eNPKSpYXIFk/thumb.webp)"></div><div class="in"><div class="meta"><span class="badge news">새소식</span><span class="mono">2026.11.22</span></div><h3>리만가설, 기계는 맞대요. 사람은 아직?</h3><div class="tags"><span>#리만가설</span><span>#Claude</span><span>#Lean</span><span>#AI 수학</span></div></div></a></div><footer><span>© 범생코드</span><a href="https://github.com/beomsaengcode/beomsaeng-code">코드 저장소 (MIT)</a><a href="/privacy/">개인정보처리방침</a></footer></main></body></html>
