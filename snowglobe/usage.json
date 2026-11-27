@@ -54,5 +54,13 @@
   "writing": 17476,
   "sec": 688,
   "usd_output": 1.43
+ },
+ "opus_max": {
+  "calls": 5,
+  "output": 461972,
+  "thinking": 436570,
+  "writing": 25402,
+  "sec": 4482,
+  "usd_output": 9.24
  }
 }

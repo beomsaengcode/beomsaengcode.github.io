@@ -1,0 +1,295 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Voxel Snow Globe</title>
+<style>html,body{margin:0;height:100%;background:#05060b;overflow:hidden}body{display:flex;align-items:center;justify-content:center}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head><body><canvas id="c" width="800" height="800"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const W=800,TAU=Math.PI*2;
+const out=document.getElementById('c'),ctx=out.getContext('2d');
+const glc=document.createElement('canvas');glc.width=W;glc.height=W;
+const renderer=new THREE.WebGLRenderer({canvas:glc,antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(1);renderer.setSize(W,W,false);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setClearColor(0x05060b,1);
+
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const rnd=mulberry(20261225);
+const sm=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+const rgb=(h,s=1)=>[((h>>16)&255)/255*s,((h>>8)&255)/255*s,(h&255)/255*s];
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(30,1,0.1,200);
+const SCALE=400/Math.tan(15*Math.PI/180);
+
+/* ---------- environment for metal / lacquer ---------- */
+const pm=new THREE.PMREMGenerator(renderer);
+const es=new THREE.Scene();es.background=new THREE.Color(0x05060a);
+const pan=(w,h,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:c,side:THREE.DoubleSide}));m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m);};
+pan(6,4,new THREE.Color(5,4.6,4),-6,6,7);pan(4,3,new THREE.Color(3,1.7,0.8),8,2,-5);
+pan(30,30,new THREE.Color(0.12,0.07,0.04),0,-7,0);pan(3,3,new THREE.Color(0.8,0.9,1.4),2,8,-6);
+const envTex=pm.fromScene(es,0.04).texture;
+
+/* ---------- background ---------- */
+const bgMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{uDir:{value:new THREE.Vector3(0,0,-1)}},
+vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+fragmentShader:`uniform vec3 uDir;varying vec3 vP;void main(){vec3 d=normalize(vP);float y=d.y;
+vec3 top=vec3(0.008,0.012,0.03),mid=vec3(0.03,0.026,0.04),bot=vec3(0.02,0.013,0.01);
+vec3 c=y>0.0?mix(mid,top,smoothstep(0.0,0.5,y)):mix(mid,bot,smoothstep(0.0,0.3,-y));
+c+=vec3(0.07,0.045,0.03)*pow(max(dot(d,uDir),0.0),10.0);gl_FragColor=vec4(c,1.0);}`});
+const bg=new THREE.Mesh(new THREE.SphereGeometry(90,32,16),bgMat);bg.renderOrder=-10;scene.add(bg);
+
+/* ---------- table ---------- */
+const tc=document.createElement('canvas');tc.width=tc.height=256;const tg=tc.getContext('2d');
+const gr=tg.createRadialGradient(128,128,0,128,128,128);gr.addColorStop(0,'#fff');gr.addColorStop(0.4,'#aaa');gr.addColorStop(1,'#000');
+tg.fillStyle=gr;tg.fillRect(0,0,256,256);
+const table=new THREE.Mesh(new THREE.CircleGeometry(8,72),new THREE.MeshStandardMaterial({color:0x3b2416,roughness:0.5,metalness:0,alphaMap:new THREE.CanvasTexture(tc),transparent:true,depthWrite:false,envMap:envTex,envMapIntensity:0.3}));
+table.rotation.x=-Math.PI/2;table.position.y=-2.78;table.receiveShadow=true;table.renderOrder=-5;scene.add(table);
+
+/* ---------- lights ---------- */
+scene.add(new THREE.HemisphereLight(0x9db4e0,0x40281a,1.05));
+const moon=new THREE.DirectionalLight(0xc9d8ff,2.6);moon.position.set(3.5,7,4.5);moon.target.position.set(0,-1,0);
+moon.castShadow=true;moon.shadow.mapSize.set(2048,2048);
+const sc=moon.shadow.camera;sc.left=-3;sc.right=3;sc.top=3;sc.bottom=-3;sc.near=1;sc.far=20;
+moon.shadow.bias=-0.0004;moon.shadow.normalBias=0.02;scene.add(moon,moon.target);
+const warm=new THREE.DirectionalLight(0xffc89a,0.8);warm.position.set(-5,2.5,3);scene.add(warm);
+
+/* ---------- base ---------- */
+const prof=[[0,-2.78],[1.66,-2.78],[1.74,-2.74],[1.76,-2.66],[1.7,-2.58],[1.56,-2.48],[1.48,-2.3],[1.42,-2.05],[1.36,-1.82],[1.3,-1.7],[1.24,-1.64],[1.0,-1.62],[0,-1.62]].map(p=>new THREE.Vector2(p[0],p[1]));
+const base=new THREE.Mesh(new THREE.LatheGeometry(prof,96),new THREE.MeshPhysicalMaterial({color:0x5e0c14,roughness:0.3,metalness:0,clearcoat:1,clearcoatRoughness:0.12,envMap:envTex,envMapIntensity:0.9,side:THREE.DoubleSide}));
+base.castShadow=base.receiveShadow=true;scene.add(base);
+const gold=new THREE.MeshStandardMaterial({color:0xd9a441,metalness:1,roughness:0.22,envMap:envTex,envMapIntensity:1.5});
+for(const [r,tb,y] of [[1.2,0.05,-1.62],[1.52,0.022,-2.4],[1.745,0.035,-2.7]]){const t=new THREE.Mesh(new THREE.TorusGeometry(r,tb,16,128),gold);t.rotation.x=Math.PI/2;t.position.y=y;t.castShadow=true;scene.add(t);}
+
+/* ---------- voxel world ---------- */
+const S=0.08,Y0=-1.58,RIN=1.88;
+const V=new Map();
+const K=(i,j,k)=>((i+64)*256+(j+64))*256+(k+64);
+const ins=(i,j,k)=>{const x=i*S,y=Y0+j*S,z=k*S;return x*x+y*y+z*z<RIN*RIN;};
+function put(i,j,k,c,v=0.07,e=0){if(!ins(i,j,k))return;V.set(K(i,j,k),{i,j,k,c,v,e});}
+const has=(i,j,k)=>V.has(K(i,j,k)),get=(i,j,k)=>V.get(K(i,j,k));
+function box(i0,j0,k0,i1,j1,k1,c,v){for(let i=i0;i<=i1;i++)for(let j=j0;j<=j1;j++)for(let k=k0;k<=k1;k++)put(i,j,k,c,v);}
+function ball(ci,cj,ck,r,c,v){const n=Math.ceil(r);for(let i=-n;i<=n;i++)for(let j=-n;j<=n;j++)for(let k=-n;k<=n;k++)if(i*i+j*j+k*k<=r*r)put(ci+i,cj+j,ck+k,c,v);}
+const SNOW=0xf3f6fb,SNOW2=0xe2e9f4,DIRT=0x5a3a26,DIRT2=0x47301f,ROCK=0x77726c;
+const LOG1=0x7b4a2b,LOG2=0x63391f,CORN=0x3f2515,RED=0xa3242a,RED2=0x7f1a1f,WOOD=0x6b4226,WIN=0xffc46b,WHITE=0xece4d6,ICE=0xd6ecff,BLACK=0x1b1b1f,BARK=0x4e3220;
+const GREENS=[0x1e5c32,0x174a29,0x26703c,0x1a5530];
+
+function H(i,k){const d=Math.hypot(i,k);return Math.round(7+3.2*Math.exp(-((i-14)**2+(k+11)**2)/24)+2.4*Math.exp(-((i+15)**2+(k-12)**2)/16)+2.2*Math.exp(-((i-2)**2+(k+19)**2)/18)+2.4*sm(15,21,d)+0.7*Math.sin(i*0.6+k*0.35)*sm(11,17,d));}
+const cand=[];
+for(let i=-24;i<=24;i++)for(let k=-24;k<=24;k++){const h=H(i,k);
+  for(let j=0;j<=h;j++){let c;if(j>=h-1)c=SNOW;else if(j>=h-2)c=SNOW2;else c=rnd()<0.12?ROCK:(j%2?DIRT:DIRT2);put(i,j,k,c,j>=h-2?0.05:0.12);}
+  if(Math.hypot(i,k)<19)cand.push([i,h,k]);
+  if(rnd()<0.025)put(i,h+1,k,SNOW,0.04);}
+// path from the door
+for(let k=-2;k<=22;k++){const ic=-8+0.32*(k+2)+1.4*Math.sin((k+2)*0.28);for(let i=Math.round(ic-1.3);i<=Math.round(ic+1.3);i++){const v=get(i,H(i,k),k);if(v)v.c=rnd()<0.18?0xaab6c8:0xc8d4e6;}}
+
+// cottage
+for(let j=8;j<=15;j++)for(let i=-13;i<=-2;i++)for(let k=-11;k<=-3;k++){const ei=i==-13||i==-2,ek=k==-11||k==-3;if(!ei&&!ek)continue;put(i,j,k,ei&&ek?CORN:(j%2?LOG1:LOG2),0.1);}
+for(let n=0;n<=5;n++){const j=16+n,ka=-12+n,kb=-2-n;for(let i=-14;i<=-1;i++)for(let k=ka;k<=kb;k++){const edge=k==ka||k==kb;put(i,j,k,edge?(rnd()<0.5?RED:RED2):WOOD,0.08);if(edge)put(i,j+1,k,SNOW,0.04);}}
+const win=(i,j,k)=>put(i,j,k,WIN,0,2.2);
+for(const i0 of [-12,-4]){for(let i=i0;i<=i0+1;i++)for(let j=10;j<=12;j++)win(i,j,-3);for(let i=i0-1;i<=i0+2;i++){put(i,9,-2,WHITE,0.04);put(i,13,-2,WHITE,0.04);}}
+for(let k=-8;k<=-6;k++)for(let j=10;j<=12;j++){win(-13,j,k);win(-2,j,k);}
+for(const i0 of [-11,-5])for(let i=i0;i<=i0+1;i++)for(let j=10;j<=12;j++)win(i,j,-11);
+win(-14,18,-7);win(-14,19,-7);win(-1,18,-7);win(-1,19,-7);
+for(let i=-9;i<=-7;i++)for(let j=8;j<=12;j++)put(i,j,-3,0x8a1a1d,0.06);
+for(let j=8;j<=13;j++){put(-10,j,-3,WHITE,0.04);put(-6,j,-3,WHITE,0.04);}for(let i=-10;i<=-6;i++)put(i,13,-3,WHITE,0.04);
+for(const [a,b] of [[-9,10],[-9,11],[-9,12],[-8,12],[-7,12],[-7,11],[-7,10]])put(a,b,-2,0x1f6a33,0.12);
+put(-8,10,-2,0xd4202a,0.03);
+for(let j=16;j<=23;j++)for(let i=-5;i<=-4;i++)for(let k=-9;k<=-8;k++)put(i,j,k,(j+i+k)%2?0x8c3a2a:0x6f2a1e,0.1);
+box(-5,24,-9,-4,24,-8,SNOW,0.03);
+
+const PAL=[0xffd59a,0xff3b3b,0x3bff6a,0x4f86ff,0xffc23b,0xff5fd2];
+const bulbs=[];
+const bulbAt=(i,j,k,hex)=>bulbs.push({i,j,k,hex,ph:rnd()*TAU,fr:2+Math.floor(rnd()*5)});
+for(let i=-14;i<=-1;i++){
+  if(i%2===0)bulbAt(i,15,-2,PAL[(-i/2)%PAL.length]);
+  else{const L=1+Math.floor(rnd()*2.2);for(let q=0;q<L;q++)put(i,15-q,-2,ICE,0.04);}
+  const L2=Math.floor(rnd()*3);for(let q=0;q<L2;q++)put(i,15-q,-12,ICE,0.04);}
+
+// big christmas tree
+const TX=8,TZ=-5;
+const tr=L=>7.2*(1-L/23)*(1-0.32*((L%4)/3))+0.6;
+box(TX-1,8,TZ-1,TX+1,9,TZ+1,BARK,0.1);
+const ORN=[0xd8232a,0xe8b33c,0x2f66d4,0xd9dde4,0xb0122a];
+for(let L=0;L<=21;L++){const r=tr(L),n=Math.ceil(r),j=10+L;for(let di=-n;di<=n;di++)for(let dk=-n;dk<=n;dk++){const d=Math.hypot(di,dk);if(d>r)continue;
+  let c=GREENS[Math.floor(rnd()*4)],v=0.12;const outer=d>r-1.1;
+  if(outer&&L%4===0&&rnd()<0.6){c=SNOW;v=0.04;}else if(outer&&rnd()<0.07){c=ORN[Math.floor(rnd()*ORN.length)];v=0.04;}
+  put(TX+di,j,TZ+dk,c,v);}}
+for(const [a,b,c] of [[0,33,0],[1,33,0],[-1,33,0],[0,32,0],[0,34,0],[0,33,1],[0,33,-1]])put(TX+a,b,TZ+c,0xffd54a,0,3);
+{let m=0;for(let L=0.5;L<21;L+=0.3,m++){const th=m*0.55;let r=tr(Math.round(L))+0.2,i=0,k=0,ok=false;const j=10+Math.round(L);
+  for(let s=0;s<4;s++){i=Math.round(TX+r*Math.cos(th));k=Math.round(TZ+r*Math.sin(th));if(!has(i,j,k)){ok=true;break;}r+=0.6;}
+  if(ok&&ins(i,j,k)&&!bulbs.some(b=>b.i===i&&b.j===j&&b.k===k))bulbAt(i,j,k,PAL[m%PAL.length]);}}
+
+// gifts
+function gift(i0,k0,w,h,d,c,rb){for(let i=0;i<w;i++)for(let j=0;j<h;j++)for(let k=0;k<d;k++){const mi=i===(w>>1),mk=k===(d>>1);put(i0+i,8+j,k0+k,(mi||mk)?rb:c,0.05);}
+  for(const q of [-1,0,1])put(i0+(w>>1)+q,8+h,k0+(d>>1),rb,0.03);put(i0+(w>>1),9+h,k0+(d>>1),rb,0.03);}
+gift(2,3,3,3,3,0xc81d2a,0xf2c14e);gift(8,3,3,2,3,0x2e8b57,0xd8232a);gift(12,1,3,2,3,0x2f5fd0,0xf4f4f4);gift(5,6,2,2,2,0xe8b33c,0xc81d2a);
+
+// small pines
+function pine(ci,ck,h,r0){const b=H(ci,ck)+1;put(ci,b,ck,BARK,0.1);
+  for(let L=0;L<h;L++){const r=r0*(1-L/h)*(1-0.3*((L%3)/2))+0.45,n=Math.ceil(r),j=b+1+L;
+    for(let di=-n;di<=n;di++)for(let dk=-n;dk<=n;dk++){const d=Math.hypot(di,dk);if(d>r)continue;const outer=d>r-1.1;
+      put(ci+di,j,ck+dk,outer&&L%3===0&&rnd()<0.7?SNOW:GREENS[Math.floor(rnd()*4)],0.12);}}
+  put(ci,b+1+h,ck,SNOW,0.03);}
+pine(5,-18,10,3.0);pine(-4,-18,8,2.6);pine(-17,-5,9,2.8);pine(16,7,8,2.8);pine(15,-10,8,2.6);
+
+// snowman
+const SX=-12,SZ=5,SW=0xf6f8fc;
+ball(SX,11,SZ,3.3,SW,0.04);ball(SX,16,SZ,2.6,SW,0.04);ball(SX,21,SZ,2.05,SW,0.04);
+for(let a=-3;a<=3;a++)for(let b=-3;b<=3;b++){if(a*a+b*b<=4.2)put(SX+a,18,SZ+b,(a+b)%2?0xc0392b:0x9e2a20,0.05);}
+put(SX+1,17,SZ+3,0xc0392b,0.05);put(SX+1,16,SZ+3,0x9e2a20,0.05);put(SX+1,15,SZ+3,0xc0392b,0.05);
+put(SX-1,22,SZ+2,BLACK,0.02);put(SX+1,22,SZ+2,BLACK,0.02);
+for(const q of [-1,0,1])put(SX+q,20,SZ+2,BLACK,0.02);
+for(let k=2;k<=4;k++)put(SX,21,SZ+k,0xff7a1a,0.05);
+put(SX,16,SZ+3,BLACK,0.02);put(SX,13,SZ+3,BLACK,0.02);
+for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)if(a*a+b*b<=5)put(SX+a,24,SZ+b,BLACK,0.03);
+for(let j=25;j<=27;j++)for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)put(SX+a,j,SZ+b,j===25?0xc0392b:BLACK,0.03);
+for(const [a,b] of [[3,17],[4,18],[5,19],[5,20],[6,19],[-3,17],[-4,18],[-5,19],[-6,20]])put(SX+a,b,SZ,0x5b3a1e,0.1);
+
+// lantern
+const LX=-1,LZ=5;
+for(let j=8;j<=17;j++)put(LX,j,LZ,0x23252b,0.05);
+for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(let j=18;j<=19;j++){if(a&&b)put(LX+a,j,LZ+b,0x23252b,0.03);else put(LX+a,j,LZ+b,0xffb04a,0,2.6);}
+box(LX-1,20,LZ-1,LX+1,20,LZ+1,0x23252b,0.03);put(LX,21,LZ,SNOW,0.03);
+
+// candy cane
+{const cc=[[5,8],[5,9],[5,10],[5,11],[5,12],[5,13],[5,14],[5,15],[6,16],[7,16],[8,15],[8,14]];cc.forEach(([a,b],n)=>put(a,b,12,n%2?0xf4f4f4:0xd81e2c,0.03));}
+
+/* ---------- build instanced voxels ---------- */
+const dirs=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const sol=[],glo=[];
+for(const v of V.values()){let ex=false;for(const d of dirs)if(!V.has(K(v.i+d[0],v.j+d[1],v.k+d[2]))){ex=true;break;}if(ex)(v.e?glo:sol).push(v);}
+const bgeo=new THREE.BoxGeometry(S,S,S);
+const col=new THREE.Color(),mtx=new THREE.Matrix4();
+const pos=v=>[v.i*S,Y0+v.j*S,v.k*S];
+function inst(list,mat,fn){const m=new THREE.InstancedMesh(bgeo,mat,list.length);
+  list.forEach((v,n)=>{const p=pos(v);mtx.makeTranslation(p[0],p[1],p[2]);m.setMatrixAt(n,mtx);fn(v,col);m.setColorAt(n,col);});
+  m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;m.frustumCulled=false;scene.add(m);return m;}
+const solMesh=inst(sol,new THREE.MeshStandardMaterial({roughness:0.82,metalness:0}),(v,c)=>c.setHex(v.c).multiplyScalar(1+(rnd()-0.5)*2*v.v));
+solMesh.castShadow=solMesh.receiveShadow=true;
+inst(glo,new THREE.MeshBasicMaterial({color:0xffffff}),(v,c)=>c.setHex(v.c).multiplyScalar(v.e));
+
+const bulbMesh=new THREE.InstancedMesh(bgeo,new THREE.MeshBasicMaterial({color:0xffffff}),bulbs.length);
+bulbs.forEach((b,n)=>{b.p=pos(b);b.col=new THREE.Color(b.hex);mtx.makeScale(0.72,0.72,0.72).setPosition(b.p[0],b.p[1],b.p[2]);bulbMesh.setMatrixAt(n,mtx);bulbMesh.setColorAt(n,b.col);});
+bulbMesh.frustumCulled=false;scene.add(bulbMesh);
+
+const NS=9,smoke=new THREE.InstancedMesh(bgeo,new THREE.MeshStandardMaterial({color:0xcfd5df,roughness:1,transparent:true,opacity:0.5,depthWrite:false}),NS);
+smoke.frustumCulled=false;smoke.renderOrder=2;scene.add(smoke);
+const CX=-4.5*S,CY=Y0+24.6*S,CZ=-8.5*S;
+
+/* ---------- point lights ---------- */
+const pl=(c,i,d,x,y,z)=>{const l=new THREE.PointLight(c,i,d,2);l.position.set(x,y,z);scene.add(l);return l;};
+const winL=pl(0xffa04a,0.45,1.8,-0.6,-0.72,0.02);
+const lanL=pl(0xffb04a,0.35,1.5,LX*S,Y0+18.5*S,LZ*S);
+const treeL=pl(0xffc27a,0.5,1.8,TX*S,-0.55,(TZ+10)*S);
+
+/* ---------- glow points (halos, sparkles, bokeh) ---------- */
+const VS_PT=`uniform float uT,uScale,uMin,uFix;attribute vec3 aC;attribute vec4 aP;varying vec3 vC;varying float vF;
+void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);
+float s=aP.y>0.0?0.5+0.5*sin(6.2831853*uT/10.0*aP.y+aP.x):1.0;
+vC=aC*(uMin+(1.0-uMin)*pow(s,abs(aP.w)));vF=aP.w<0.0?1.0:0.0;
+gl_PointSize=uFix>0.5?aP.z:aP.z*uScale/(-mv.z);gl_Position=projectionMatrix*mv;}`;
+const FS_PT=`uniform float uDisc;varying vec3 vC;varying float vF;
+void main(){vec2 q=gl_PointCoord*2.0-1.0;float d=length(q);if(d>1.0)discard;
+float g=uDisc>0.5?(1.0-smoothstep(0.82,1.0,d))*(0.5+0.5*d*d):exp(-d*d*5.0)*(1.0-d);
+g+=vF*(exp(-abs(q.x)*22.0)+exp(-abs(q.y)*22.0))*(1.0-d)*0.9;gl_FragColor=vec4(vC*g,1.0);}`;
+const ptMats=[];
+function mkPts(arr,o){const g=new THREE.BufferGeometry(),P=[],C=[],A=[];
+  for(const h of arr){P.push(...h.p);C.push(...h.c);A.push(h.ph||0,h.fr||0,h.size,h.ex||1);}
+  g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aC',new THREE.Float32BufferAttribute(C,3));g.setAttribute('aP',new THREE.Float32BufferAttribute(A,4));
+  const m=new THREE.ShaderMaterial({uniforms:{uT:{value:0},uScale:{value:SCALE},uMin:{value:o.min},uFix:{value:o.fix?1:0},uDisc:{value:o.disc?1:0}},vertexShader:VS_PT,fragmentShader:FS_PT,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+  const p=new THREE.Points(g,m);p.frustumCulled=false;p.renderOrder=o.ro;scene.add(p);ptMats.push(m);}
+const halos=[];
+bulbs.forEach(b=>halos.push({p:b.p,c:rgb(b.hex,0.55),ph:b.ph,fr:b.fr,size:0.2,ex:1}));
+glo.forEach(v=>halos.push({p:pos(v),c:rgb(v.c,0.06*v.e),size:0.17}));
+halos.push({p:[TX*S,Y0+33*S,TZ*S],c:[1,0.82,0.45],size:0.62,ex:-1});
+halos.push({p:[LX*S,Y0+18.5*S,LZ*S],c:rgb(0xffb04a,0.35),size:0.5});
+mkPts(halos,{min:0.35,ro:4});
+const sparks=[];
+for(let n=0;n<190;n++){const c=cand[Math.floor(rnd()*cand.length)];const v=get(c[0],c[1],c[2]);if(!v||has(c[0],c[1]+1,c[2]))continue;
+  sparks.push({p:[c[0]*S+(rnd()-0.5)*0.05,Y0+c[1]*S+S*0.5+0.01,c[2]*S+(rnd()-0.5)*0.05],c:[1.0,1.05,1.15],ph:rnd()*TAU,fr:3+Math.floor(rnd()*8),size:0.055,ex:10});}
+mkPts(sparks,{min:0,ro:4});
+const bok=[],BC=[[1,0.72,0.36],[1,0.45,0.3],[1,0.86,0.55],[0.5,0.9,0.6],[0.55,0.7,1]];
+for(let n=0;n<46;n++){const th=rnd()*TAU,r=15+rnd()*12,c=BC[Math.floor(rnd()*5)],k=0.05+0.12*rnd();bok.push({p:[Math.cos(th)*r,-2+rnd()*7,Math.sin(th)*r],c:c.map(x=>x*k),size:16+rnd()*50});}
+mkPts(bok,{min:1,fix:1,disc:1,ro:-4});
+
+/* ---------- falling snow ---------- */
+const NF=1100,fa=new Float32Array(NF*4),fb=new Float32Array(NF*4);
+for(let n=0;n<NF;n++){const r=1.86*Math.sqrt(rnd()),th=rnd()*TAU;
+  fa.set([r*Math.cos(th),r*Math.sin(th),rnd(),0.026+0.045*rnd()*rnd()],n*4);
+  fb.set([rnd()<0.72?1:2,rnd()*TAU,0.03+0.09*rnd(),1+Math.floor(rnd()*3)],n*4);}
+const sg=new THREE.BufferGeometry();
+sg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NF*3),3));
+sg.setAttribute('aA',new THREE.BufferAttribute(fa,4));sg.setAttribute('aB',new THREE.BufferAttribute(fb,4));
+const snowMat=new THREE.ShaderMaterial({uniforms:{uT:{value:0},uScale:{value:SCALE}},transparent:true,depthWrite:false,
+vertexShader:`uniform float uT,uScale;attribute vec4 aA;attribute vec4 aB;varying float vA;
+void main(){float ph=fract(aA.z+uT*aB.x/10.0);float y=1.95-ph*3.1;
+float w=6.2831853*uT/10.0*aB.w;
+vec3 p=vec3(aA.x+aB.z*sin(w+aB.y),y,aA.y+aB.z*cos(w+aB.y*1.7));
+float r=length(p);
+vA=(1.0-smoothstep(1.8,1.93,r))*smoothstep(-1.05,-0.85,y);
+vec4 mv=modelViewMatrix*vec4(p,1.0);gl_PointSize=aA.w*uScale/(-mv.z);gl_Position=projectionMatrix*mv;}`,
+fragmentShader:`varying float vA;void main(){float d=length(gl_PointCoord-0.5)*2.0;float a=(1.0-smoothstep(0.35,1.0,d))*vA;if(a<0.01)discard;gl_FragColor=vec4(0.97,0.98,1.0,a*0.95);}`});
+const snow=new THREE.Points(sg,snowMat);snow.frustumCulled=false;snow.renderOrder=3;scene.add(snow);
+
+/* ---------- glass ---------- */
+const GV=`varying vec3 vN;varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;vN=normalize(mat3(modelMatrix)*normal);gl_Position=projectionMatrix*viewMatrix*w;}`;
+const GF=`uniform float uBack;varying vec3 vN;varying vec3 vW;
+vec3 env(vec3 r){
+vec3 c=mix(vec3(0.05,0.035,0.025),vec3(0.03,0.04,0.07),smoothstep(-0.3,0.5,r.y));
+vec3 d1=normalize(vec3(-0.5,0.55,0.67));vec3 t1=normalize(cross(d1,vec3(0.0,1.0,0.0)));vec3 t2=cross(t1,d1);
+float a=dot(r,d1),u=dot(r,t1),w=dot(r,t2);
+float bx=step(0.0,a)*(1.0-smoothstep(0.26,0.3,abs(u)))*(1.0-smoothstep(0.34,0.38,abs(w)));
+float bars=smoothstep(0.01,0.02,abs(u))*smoothstep(0.01,0.02,abs(w));
+c+=vec3(1.0,0.97,0.92)*bx*bars*5.0;
+c+=vec3(0.5,0.6,0.9)*pow(max(a,0.0),6.0)*0.25;
+float b=dot(r,normalize(vec3(0.8,0.2,-0.55)));c+=vec3(1.0,0.72,0.42)*smoothstep(0.975,0.992,b)*4.0;
+float s=dot(r,normalize(vec3(0.1,0.95,-0.3)));c+=vec3(0.85,0.9,1.0)*smoothstep(0.96,0.985,s)*1.5;
+return c;}
+void main(){vec3 n=normalize(vN);if(uBack>0.5)n=-n;vec3 v=normalize(vW-cameraPosition);
+float ndv=clamp(abs(dot(n,v)),0.0,1.0);float f=pow(1.0-ndv,3.0);float F=0.04+0.96*f;
+vec3 col=env(reflect(v,n))*F+vec3(0.55,0.7,1.0)*pow(1.0-ndv,6.0)*0.35;
+float al=0.03+0.5*pow(1.0-ndv,4.0);float k=uBack>0.5?0.45:1.0;
+gl_FragColor=vec4(col*k,al*k);}`;
+const gmat=back=>new THREE.ShaderMaterial({uniforms:{uBack:{value:back}},vertexShader:GV,fragmentShader:GF,transparent:true,depthWrite:false,
+  side:back?THREE.BackSide:THREE.FrontSide,blending:THREE.CustomBlending,blendEquation:THREE.AddEquation,blendSrc:THREE.OneFactor,blendDst:THREE.OneMinusSrcAlphaFactor});
+const sgeo=new THREE.SphereGeometry(2,128,96,0,TAU,0,Math.acos(-0.81));
+const gBack=new THREE.Mesh(sgeo,gmat(1));gBack.renderOrder=1;scene.add(gBack);
+const gFront=new THREE.Mesh(sgeo,gmat(0));gFront.renderOrder=10;scene.add(gFront);
+
+/* ---------- draw ---------- */
+const vig=ctx.createRadialGradient(400,390,230,400,400,590);
+vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,0.55)');
+const tgt=new THREE.Vector3(0,-0.42,0),dummy=new THREE.Object3D();
+window.__length=10;
+window.__draw=function(t){
+  const u=t/10,a=u*TAU-2.69,rad=10.3;
+  camera.position.set(Math.sin(a)*rad,1.55+0.22*Math.sin(u*TAU*2),Math.cos(a)*rad);
+  camera.lookAt(tgt);
+  bgMat.uniforms.uDir.value.copy(tgt).sub(camera.position).normalize();
+  for(const m of ptMats)m.uniforms.uT.value=t;
+  snowMat.uniforms.uT.value=t;
+  bulbs.forEach((b,n)=>{const s=0.5+0.5*Math.sin(TAU*u*b.fr+b.ph);col.copy(b.col).multiplyScalar(2.4*(0.35+0.65*s));bulbMesh.setColorAt(n,col);});
+  bulbMesh.instanceColor.needsUpdate=true;
+  for(let n=0;n<NS;n++){const ph=(u*2+n/NS)%1;
+    const sc=(0.9+2.2*ph)*Math.min(1,ph/0.12)*(1-sm(0.65,1,ph));
+    dummy.position.set(CX+ph*0.28+0.05*Math.sin(ph*7+n),CY+ph*0.95,CZ+0.06*Math.cos(ph*5+n*2));
+    dummy.rotation.set(ph*1.3,ph*2+n,0);dummy.scale.setScalar(Math.max(sc,1e-4));dummy.updateMatrix();smoke.setMatrixAt(n,dummy.matrix);}
+  smoke.instanceMatrix.needsUpdate=true;
+  lanL.intensity=0.33+0.04*Math.sin(TAU*u*9)+0.02*Math.sin(TAU*u*23);
+  winL.intensity=0.44+0.03*Math.sin(TAU*u*7+1.3);
+  treeL.intensity=0.48+0.06*Math.sin(TAU*u*3);
+  renderer.render(scene,camera);
+  ctx.drawImage(glc,0,0,W,W);
+  ctx.fillStyle=vig;ctx.fillRect(0,0,W,W);
+};
+if(location.search.includes('still')){
+  const go=()=>window.__draw(5);
+  if(document.readyState==='complete')go();else window.addEventListener('load',go);
+}else{
+  const loop=()=>{window.__draw((performance.now()/1000)%10);requestAnimationFrame(loop);};
+  requestAnimationFrame(loop);
+}
+</script></body></html>

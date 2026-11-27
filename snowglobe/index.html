@@ -59,10 +59,11 @@ button.x{background:var(--panel);color:var(--fg);border:1px solid var(--line);bo
 <p>이건 모델이 못한 게 아니라 제가 시킨 방식 탓이에요. 설계와 코드를 호출 한 번에 다 시켰고, 생각 강도는 max로 뒀어요.</p>
 <p>호출 한 번에 쓸 수 있는 출력은 128,000토큰까지예요. 생각도 출력에 들어가요.</p>
 <p>Fable max는 첫 호출에서 128,000토큰을 전부 생각에 쓰고 한도에 걸렸어요. 코드는 한 줄도 못 썼어요. 다시 불러서 72,000토큰쯤 더 생각한 뒤에 파일을 썼어요. 그래서 합계가 200,226토큰이고, 값도 합계만큼 나가요.</p>
-<p>Opus max도 첫 호출이 똑같이 128,000토큰에서 끊겼어요.</p>
+<p>Opus max는 세 번 연속 128,000토큰에서 끊겼고, 네 번째 호출에서 파일을 썼어요. 모두 74분 42초, 출력 461,972토큰이에요.</p>
 <div class="wrap"><table><thead><tr><th>숫자</th><th>뜻</th></tr></thead><tbody>
 <tr><td>128,000</td><td style="text-align:left;white-space:normal">호출 한 번의 출력 한도</td></tr>
 <tr><td>200,226</td><td style="text-align:left;white-space:normal">Fable max가 완성까지 여러 번 호출하며 쓴 생각 토큰 합계</td></tr>
+<tr><td>436,570</td><td style="text-align:left;white-space:normal">Opus max가 같은 식으로 쓴 생각 토큰 합계</td></tr>
 </tbody></table></div>
 
 <h2>한도에 걸리면</h2>
