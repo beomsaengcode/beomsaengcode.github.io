@@ -1,0 +1,58 @@
+{
+ "fable_low": {
+  "calls": 2,
+  "output": 21817,
+  "thinking": 12658,
+  "writing": 9159,
+  "sec": 232,
+  "usd_output": 0.87
+ },
+ "fable_medium": {
+  "calls": 2,
+  "output": 24447,
+  "thinking": 12694,
+  "writing": 11753,
+  "sec": 252,
+  "usd_output": 0.98
+ },
+ "fable_high": {
+  "calls": 2,
+  "output": 84109,
+  "thinking": 65795,
+  "writing": 18314,
+  "sec": 888,
+  "usd_output": 3.36
+ },
+ "fable_max": {
+  "calls": 3,
+  "output": 211059,
+  "thinking": 200226,
+  "writing": 10833,
+  "sec": 2243,
+  "usd_output": 8.44
+ },
+ "opus_low": {
+  "calls": 2,
+  "output": 6242,
+  "thinking": 403,
+  "writing": 5839,
+  "sec": 54,
+  "usd_output": 0.12
+ },
+ "opus_medium": {
+  "calls": 2,
+  "output": 42029,
+  "thinking": 29129,
+  "writing": 12900,
+  "sec": 407,
+  "usd_output": 0.84
+ },
+ "opus_high": {
+  "calls": 2,
+  "output": 71721,
+  "thinking": 54245,
+  "writing": 17476,
+  "sec": 688,
+  "usd_output": 1.43
+ }
+}

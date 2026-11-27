@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Snow Globe</title>
+<style>
+html,body{margin:0;padding:0;background:#05060b;}
+canvas{display:block;}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head>
+<body>
+<canvas id="c" width="800" height="800"></canvas>
+<script type="module">
+import * as THREE from 'three';
+
+const W = 800, H = 800, LEN = 10, TAU = Math.PI * 2;
+const out = document.getElementById('c');
+const ctx = out.getContext('2d');
+
+const glc = document.createElement('canvas');
+glc.width = W; glc.height = H;
+const renderer = new THREE.WebGLRenderer({ canvas: glc, antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+// ---------------------------------------------------------------- helpers
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rnd = mulberry32(20261225);
+function hash3(x, y, z) {
+  let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1440662683);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+const sm = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const frac = x => x - Math.floor(x);
+const hex2rgb = h => [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255];
+function mixHex(a, b, t) {
+  const A = hex2rgb(a), B = hex2rgb(b);
+  const r = Math.round((A[0] + (B[0] - A[0]) * t) * 255);
+  const g = Math.round((A[1] + (B[1] - A[1]) * t) * 255);
+  const bl = Math.round((A[2] + (B[2] - A[2]) * t) * 255);
+  return (r << 16) | (g << 8) | bl;
+}
+function radialTexture(size, stops, cx, cy, r0, r1) {
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const g = cv.getContext('2d');
+  const h = size / 2;
+  const gr = g.createRadialGradient(cx === undefined ? h : cx, cy === undefined ? h : cy, r0 || 0,
+    cx === undefined ? h : cx, cy === undefined ? h : cy, r1 || h);
+  for (const s of stops) gr.addColorStop(s[0], s[1]);
+  g.fillStyle = gr;
+  g.fillRect(0, 0, size, size);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// ---------------------------------------------------------------- scene
+const scene = new THREE.Scene();
+scene.background = radialTexture(800, [[0, '#1c2850'], [0.45, '#0d1330'], [1, '#04050b']], 400, 330, 30, 640);
+
+const camera = new THREE.PerspectiveCamera(36, 1, 1, 200);
+const CAM_R = 23, CAM_H = 4.5, A0 = -0.3 - Math.PI;
+
+// procedural environment for reflections
+{
+  const envS = new THREE.Scene();
+  const bm = (r, g, b, side) => { const m = new THREE.MeshBasicMaterial({ side: side || THREE.FrontSide }); m.color.setRGB(r, g, b); return m; };
+  envS.add(new THREE.Mesh(new THREE.SphereGeometry(30, 24, 16), bm(0.02, 0.035, 0.08, THREE.BackSide)));
+  const panel = (x, y, z, sx, sy, sz, r, g, b) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), bm(r, g, b));
+    m.position.set(x, y, z); m.lookAt(0, 0, 0); envS.add(m);
+  };
+  panel(-10, 7, 10, 7, 7, 0.5, 9, 6.5, 3.5);
+  panel(12, 9, -5, 6, 6, 0.5, 2, 3, 6);
+  panel(0, 16, 0, 12, 12, 0.5, 1.4, 1.7, 2.4);
+  panel(11, -2, 11, 4, 4, 0.5, 3, 0.3, 0.3);
+  panel(-12, -1, -9, 4, 4, 0.5, 0.3, 2.4, 0.6);
+  panel(-3, 3, -14, 3, 8, 0.5, 5, 5, 5);
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(envS, 0.03).texture;
+  pm.dispose();
+}
+
+// ---------------------------------------------------------------- voxel store
+const U = 5 / 24;      // voxel size in world units (globe radius 5 = 24 voxels)
+const CY = 8;          // globe centre height in voxel units
+const RV = 23;         // voxels must stay inside this radius
+const vox = new Map();
+const K = (x, y, z) => (x + 128) + ((y + 128) << 8) + ((z + 128) << 16);
+const has = (x, y, z) => vox.has(K(x, y, z));
+function set(x, y, z, c, kind = 0, tw = null) {
+  const dy = y - CY;
+  if (x * x + dy * dy + z * z > RV * RV) return;
+  if (typeof c === 'function') c = c(x, y, z);
+  vox.set(K(x, y, z), { x, y, z, c, kind, tw });
+}
+function box(x0, y0, z0, x1, y1, z1, c, kind = 0, tw = null) {
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) set(x, y, z, c, kind, tw);
+}
+function disc(cx, y, cz, r, c, kind = 0, cells = null) {
+  const R = Math.ceil(r);
+  for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) {
+    if (dx * dx + dz * dz <= r * r) { set(cx + dx, y, cz + dz, c, kind); if (cells) cells.push([cx + dx, y, cz + dz]); }
+  }
+}
+function ball(cx, cy, cz, r, c) {
+  const R = Math.ceil(r);
+  for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++)
+    for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) {
+      const dy = y - cy;
+      if (dx * dx + dy * dy + dz * dz <= r * r) set(cx + dx, y, cz + dz, c);
+    }
+}
+function snowCap(cells, p) {
+  for (const [x, y, z] of cells) {
+    if (has(x, y + 1, z)) continue;
+    if (hash3(x + 5, y, z - 3) < p) { const v = vox.get(K(x, y, z)); if (v && v.kind === 0) v.c = SNOW; }
+  }
+}
+const glows = [];
+function addGlow(x, y, z, hex, inten, size, f = 0, p = 0, a = 0) {
+  const c = hex2rgb(hex);
+  glows.push({ x, y, z, r: c[0] * inten, g: c[1] * inten, b: c[2] * inten, size, f, p, a });
+}
+
+// ---------------------------------------------------------------- palette
+const SNOW = 0xf3f7ff, SNOWDEEP = 0xaebfea, PATH = 0xc6d1ec;
+const RED = 0xd1232e, GOLD = 0xf2b632, COAL = 0x1b1d22, TRUNK = 0x5a371f;
+const WINC = 0xffc55c, DARKWOOD = 0x4a2a17;
+const ICEF = (x, y, z) => mixHex(0x86c8f0, 0xbfe6fb, hash3(x, y, z));
+const GREENS = [0x1b6b37, 0x237d42, 0x175a2e, 0x2b8a4a];
+const leaf = (x, y, z) => GREENS[(hash3(x, y, z) * 4) | 0];
+const GREENS2 = [0x1d5e3a, 0x226b40, 0x184f30];
+const leaf2 = (x, y, z) => GREENS2[(hash3(x, y, z) * 3) | 0];
+
+// ---------------------------------------------------------------- ground
+const pondD = (x, z) => Math.hypot(x / 5.5, (z - 15) / 3.0);
+function gh(x, z) {
+  const pd = pondD(x, z);
+  if (pd < 1) return 0;
+  const r = Math.hypot(x, z);
+  const n = Math.sin(x * 0.31 + 1.3) * Math.cos(z * 0.27 - 0.6) + 0.6 * Math.sin((x + z) * 0.19 + 2.0);
+  const k = sm(13, 21, r) * sm(1.0, 2.0, pd);
+  return 1 + Math.max(0, Math.round(k * (1.5 + 1.4 * n)));
+}
+for (let x = -23; x <= 23; x++) for (let z = -23; z <= 23; z++) {
+  if (x * x + z * z > 23.6 * 23.6) continue;
+  const h = gh(x, z);
+  for (let y = -6; y <= h; y++) {
+    const top = y === h;
+    const c = top ? (h === 0 ? ICEF : SNOW) : mixHex(SNOW, SNOWDEEP, Math.min(1, (h - y) / 5));
+    set(x, y, z, c, (top && h === 0) ? 2 : 0);
+  }
+}
+// trodden path from the door
+for (let z = -2; z <= 12; z++) {
+  const s = (z + 2) / 14;
+  const x0 = -9 + Math.round(1.4 * Math.sin(s * 2.8));
+  for (const x of [x0, x0 + 1]) set(x, gh(x, z), z, PATH);
+}
+
+// ---------------------------------------------------------------- cabin
+const X0 = -14, X1 = -4, Z0 = -11, Z1 = -3;
+const LOG = (x, y, z) => (y % 2 === 0) ? 0x7b4a2b : 0x6a3d22;
+const ROOF = 0x8c2f25;
+box(X0, 2, Z0, X1, 8, Z1, LOG);
+for (const [x, z] of [[X0, Z0], [X0, Z1], [X1, Z0], [X1, Z1]]) for (let y = 2; y <= 8; y++) set(x, y, z, DARKWOOD);
+for (let i = 0; i <= 5; i++) {
+  const zl = Z0 - 1 + i, zr = Z1 + 1 - i, y = 8 + i;
+  for (let x = X0 - 1; x <= X1 + 1; x++) {
+    set(x, y, zl, ROOF); set(x, y, zr, ROOF);
+    set(x, y + 1, zl, SNOW); set(x, y + 1, zr, SNOW);
+    if (hash3(x >> 1, i, 7) < 0.25) set(x, y + 2, zl, SNOW);
+    if (hash3(x >> 1, i, 19) < 0.25) set(x, y + 2, zr, SNOW);
+  }
+  if (y > 8) for (let z = zl + 1; z <= zr - 1; z++) for (let x = X0; x <= X1; x++) set(x, y, z, LOG);
+}
+// door
+box(-11, 7, Z1, -7, 7, Z1, DARKWOOD);
+box(-10, 2, Z1, -8, 6, Z1, 0x9c1f26);
+set(-8, 4, Z1, GOLD, 2);
+set(-9, 5, Z1, WINC, 1, { f: 7, p: 0.3, a: 0.1 });
+addGlow(-9, 5, Z1 + 0.9, 0xffa040, 0.35, 5, 7, 0.3, 0.1);
+// windows
+function windowBox(x0, y0, z0, x1, y1, z1, gx, gy, gz) {
+  const p = rnd();
+  box(x0, y0, z0, x1, y1, z1, WINC, 1, { f: 7, p, a: 0.1 });
+  addGlow(gx, gy, gz, 0xffa040, 0.42, 10, 7, p, 0.1);
+}
+windowBox(-13, 4, Z1, -12, 5, Z1, -12.5, 4.5, Z1 + 0.9);
+windowBox(-6, 4, Z1, -5, 5, Z1, -5.5, 4.5, Z1 + 0.9);
+box(-13, 6, Z1, -12, 6, Z1, DARKWOOD); box(-6, 6, Z1, -5, 6, Z1, DARKWOOD);
+box(-13, 3, Z1 + 1, -12, 3, Z1 + 1, SNOW); box(-6, 3, Z1 + 1, -5, 3, Z1 + 1, SNOW);
+windowBox(X1, 4, -8, X1, 5, -6, X1 + 0.9, 4.5, -7);
+windowBox(X0, 4, -8, X0, 5, -6, X0 - 0.9, 4.5, -7);
+windowBox(-10, 4, Z0, -8, 5, Z0, -9, 4.5, Z0 - 0.9);
+set(X0, 10, -7, WINC, 1, { f: 7, p: 0.6, a: 0.1 });
+addGlow(X0 - 0.9, 10, -7, 0xffa040, 0.3, 5, 7, 0.6, 0.1);
+// wreath on the gable facing the tree
+for (let y = 9; y <= 11; y++) for (let z = -8; z <= -6; z++) {
+  if (y === 10 && z === -7) continue;
+  set(X1 + 1, y, z, 0x2f8a3e);
+}
+set(X1 + 1, 9, -7, RED, 2);
+set(X1 + 1, 11, -8, GOLD, 2);
+// chimney
+box(-12, 9, -9, -11, 16, -8, (x, y, z) => hash3(x, y, z) < 0.5 ? 0x8c3a2c : 0x77302a);
+set(-12, 17, -9, SNOW); set(-11, 17, -8, SNOW);
+// eave fairy lights and icicles
+{
+  const EC = [0xff3b30, 0x57f06a, 0xffd45e, 0x39b6ff];
+  let j = 0;
+  for (const zz of [Z1 + 1, Z0 - 1]) {
+    for (let x = X0 - 1; x <= X1 + 1; x++) {
+      if ((x - (X0 - 1)) % 2 === 0) {
+        const c = EC[j % 4], p = (j % 4) / 4;
+        set(x, 7, zz, c, 1, { f: 2, p, a: 0.7 });
+        addGlow(x, 7, zz + (zz > Z0 ? 0.7 : -0.7), c, 0.42, 3.8, 2, p, 0.7);
+        j++;
+      } else if (hash3(x, 3, zz) < 0.45) {
+        set(x, 7, zz, 0xd4ecff, 2);
+        if (hash3(x, 5, zz) < 0.4) set(x, 6, zz, 0xd4ecff, 2);
+      }
+    }
+  }
+}
+// candy canes by the door
+function cane(x, z, d) {
+  for (let y = 2; y <= 6; y++) set(x, y, z, (y % 2) ? 0xffffff : RED, 2);
+  set(x, 7, z, 0xffffff, 2); set(x + d, 7, z, RED, 2); set(x + 2 * d, 6, z, 0xffffff, 2);
+}
+cane(-11, -1, -1); cane(-7, -1, 1);
+
+// ---------------------------------------------------------------- big christmas tree
+const TX = 7, TZ = -1;
+{
+  const cells = [];
+  for (let y = 2; y <= 5; y++) disc(TX, y, TZ, 1, TRUNK);
+  const TR = [7, 6.1, 5.2, 4.3, 5.7, 4.9, 4.1, 3.3, 4.4, 3.7, 3.0, 2.3, 3.1, 2.4, 1.7, 1.0, 1.0];
+  TR.forEach((r, i) => {
+    const y = 5 + i, R = Math.ceil(r) + 1;
+    for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) {
+      const jr = r + (r > 1.5 ? (hash3(TX + dx, y * 7, TZ + dz) - 0.5) * 0.7 : 0);
+      if (dx * dx + dz * dz <= jr * jr) { set(TX + dx, y, TZ + dz, leaf); cells.push([TX + dx, y, TZ + dz]); }
+    }
+  });
+  for (const [x, y, z] of cells) {
+    if (has(x, y + 1, z)) continue;
+    const n = 0.5 + 0.5 * Math.sin(x * 0.9 + y * 1.7) * Math.cos(z * 0.8 - y);
+    if (hash3(x, y, z + 99) < 0.22 + 0.3 * n) { const v = vox.get(K(x, y, z)); if (v) v.c = SNOW; }
+  }
+  const BULBS = [0xffd45e, 0xff3b30, 0x39b6ff, 0x57f06a, 0xff6ad5, 0xfff1c9];
+  const BAUB = [0xd3202b, 0xf0b429, 0x2a6fdb, 0xdfe6f2];
+  let nb = 0, nba = 0;
+  for (let k = 0; k < 76; k++) {
+    const i = Math.min(15, Math.floor(k / 76 * 16)), y = 5 + i;
+    const ang = k * 2.39996 + 0.4, cs = Math.cos(ang), sn = Math.sin(ang);
+    let found = null;
+    for (let rr = TR[i] + 1; rr >= 0; rr -= 0.5) {
+      const x = Math.round(TX + rr * cs), z = Math.round(TZ + rr * sn);
+      if (has(x, y, z)) { found = [x, z, rr]; break; }
+    }
+    if (!found) continue;
+    const [x, z, rr] = found;
+    if (k % 3 === 0) {
+      set(x, y, z, BAUB[nba++ % 4], 2);
+    } else {
+      const c = BULBS[nb++ % 6], f = 1 + ((rnd() * 3) | 0), p = rnd();
+      set(x, y, z, c, 1, { f, p, a: 0.7 });
+      addGlow(TX + (rr + 0.7) * cs, y, TZ + (rr + 0.7) * sn, c, 0.5, 4.4, f, p, 0.7);
+    }
+  }
+  // star
+  const STAR = 0xffdf6b, tw = { f: 2, p: 0, a: 0.22 };
+  for (const [y, mn, mx] of [[22, 1, 1], [23, 0, 1], [24, 0, 2], [25, 0, 1], [26, 0, 0]]) {
+    for (let d = -mx; d <= mx; d++) {
+      if (Math.abs(d) < mn) continue;
+      set(TX + d, y, TZ, STAR, 1, tw); set(TX, y, TZ + d, STAR, 1, tw);
+    }
+  }
+  addGlow(TX, 24, TZ, 0xffd070, 0.5, 22, 2, 0, 0.22);
+  addGlow(TX, 24, TZ, 0xfff0c0, 0.6, 9, 2, 0, 0.22);
+}
+
+// ---------------------------------------------------------------- presents
+function present(x0, z0, w, d, h, c, rc) {
+  const cx = x0 + (w >> 1), cz = z0 + (d >> 1), y0 = gh(cx, cz) + 1;
+  for (let x = x0; x < x0 + w; x++) for (let z = z0; z < z0 + d; z++) for (let y = y0; y < y0 + h; y++) {
+    const rib = (w % 2 === 1) && (x === cx || z === cz);
+    set(x, y, z, rib ? rc : c, rib ? 2 : 0);
+  }
+  set(cx, y0 + h, cz, rc, 2);
+}
+present(2, 3, 3, 3, 3, 0xc8202c, 0xf5c542);
+present(6, 4, 3, 3, 2, 0x2d6cdf, 0xf4f6fb);
+present(11, 1, 3, 3, 2, 0x2e9b4f, 0xd3202b);
+present(0, -5, 3, 3, 2, 0xe8b730, 0xc8202c);
+present(10, 4, 2, 2, 2, 0x8a3fc4, 0xf5c542);
+
+// ---------------------------------------------------------------- snowman
+{
+  const sx = -4, sz = 9;
+  ball(sx, 3.5, sz, 2.4, SNOW);
+  ball(sx, 7, sz, 2.0, SNOW);
+  box(sx - 1, 9, sz - 1, sx + 1, 11, sz + 1, SNOW);
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) set(sx + dx, 8, sz + dz, RED);
+  set(sx + 1, 7, sz + 1, RED); set(sx + 1, 6, sz + 1, RED);
+  set(sx - 1, 11, sz + 1, COAL); set(sx + 1, 11, sz + 1, COAL);
+  set(sx, 10, sz + 2, 0xff8a1f);
+  set(sx, 7, sz + 2, COAL); set(sx, 4, sz + 2, COAL);
+  disc(sx, 12, sz, 2.3, COAL);
+  box(sx - 1, 13, sz - 1, sx + 1, 15, sz + 1, COAL);
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) set(sx + dx, 13, sz + dz, RED);
+  set(sx - 3, 7, sz, TRUNK); set(sx - 4, 8, sz, TRUNK);
+  set(sx + 3, 7, sz, TRUNK); set(sx + 4, 8, sz, TRUNK); set(sx + 4, 9, sz, TRUNK);
+}
+
+// ---------------------------------------------------------------- lamp post
+const LAMP = { x: -13, z: 4, y: 0 };
+{
+  const x = LAMP.x, z = LAMP.z, g = gh(x, z), IRON = 0x23262b;
+  LAMP.y = g + 8;
+  for (let y = g + 1; y <= g + 7; y++) set(x, y, z, IRON);
+  set(x + 1, g + 1, z, IRON); set(x - 1, g + 1, z, IRON); set(x, g + 1, z + 1, IRON); set(x, g + 1, z - 1, IRON);
+  set(x, g + 6, z + 1, RED, 2); set(x + 1, g + 6, z, 0x2f8a3e); set(x - 1, g + 6, z, 0x2f8a3e);
+  set(x, g + 8, z, 0xffd98a, 1, { f: 5, p: 0.2, a: 0.08 });
+  disc(x, g + 9, z, 1, IRON);
+  set(x, g + 10, z, SNOW);
+  addGlow(x, g + 8, z, 0xffc070, 0.55, 13, 5, 0.2, 0.08);
+}
+
+// ---------------------------------------------------------------- reindeer
+{
+  const ox = 12, oz = 9;
+  const P = (f, y, w, c, kind = 0, tw = null) => set(ox - f, y, oz + w, c, kind, tw);
+  const FUR = 0x8a5a33, DARK = 0x54341d, LIGHT = 0xcaa26c;
+  for (let f = 0; f <= 5; f++) for (let w = -1; w <= 1; w++) for (let y = 5; y <= 7; y++) P(f, y, w, FUR);
+  for (const f of [0, 5]) for (const w of [-1, 1]) for (let y = 2; y <= 4; y++) P(f, y, w, y === 2 ? COAL : DARK);
+  for (let f = 4; f <= 5; f++) for (let w = -1; w <= 1; w++) P(f, 8, w, FUR);
+  for (let f = 5; f <= 7; f++) for (let w = -1; w <= 1; w++) for (let y = 9; y <= 11; y++) P(f, y, w, FUR);
+  for (let w = -1; w <= 1; w++) P(7, 9, w, LIGHT);
+  P(7, 11, -1, COAL); P(7, 11, 1, COAL);
+  P(8, 10, 0, 0xff2a2a, 1, { f: 2, p: 0.1, a: 0.3 });
+  addGlow(ox - 8.6, 10, oz, 0xff3030, 0.6, 5.5, 2, 0.1, 0.3);
+  for (const s of [-1, 1]) {
+    P(6, 12, s, LIGHT); P(6, 13, s, LIGHT); P(6, 13, 2 * s, LIGHT); P(6, 14, 2 * s, LIGHT); P(5, 14, s, LIGHT);
+    P(5, 12, s, DARK);
+  }
+  P(-1, 7, 0, SNOW);
+  for (let f = 1; f <= 3; f++) { for (let w = -1; w <= 1; w++) P(f, 7, w, RED); P(f, 6, -1, RED); P(f, 6, 1, RED); }
+  P(2, 6, -1, GOLD, 2); P(2, 6, 1, GOLD, 2);
+  P(6, 8, 0, GOLD, 2);
+}
+
+// ---------------------------------------------------------------- small pines
+function pine(cx, cz, n, R) {
+  const cells = [];
+  let y = gh(cx, cz) + 1;
+  set(cx, y, cz, TRUNK); set(cx, y + 1, cz, TRUNK); y += 2;
+  for (let j = 0; j < n; j++) {
+    const rb = R * (1 - j / (n + 0.35));
+    disc(cx, y, cz, rb, leaf2, 0, cells);
+    disc(cx, y + 1, cz, Math.max(0.8, rb * 0.62), leaf2, 0, cells);
+    y += 2;
+  }
+  set(cx, y, cz, leaf2); cells.push([cx, y, cz]);
+  snowCap(cells, 0.55);
+}
+pine(14, -10, 3, 2.6);
+pine(-18, 4, 3, 2.4);
+pine(2, -17, 3, 2.6);
+pine(-8, -18, 2, 2.0);
+pine(18, 2, 2, 2.2);
+pine(-11, 15, 2, 2.0);
+pine(9, 17, 2, 1.9);
+
+// ---------------------------------------------------------------- build voxel meshes
+const world = new THREE.Group();
+world.scale.setScalar(U);
+world.position.y = -CY * U;
+scene.add(world);
+
+const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+const lists = [[], [], []];
+for (const v of vox.values()) {
+  if (has(v.x + 1, v.y, v.z) && has(v.x - 1, v.y, v.z) && has(v.x, v.y + 1, v.z) && has(v.x, v.y - 1, v.z) && has(v.x, v.y, v.z + 1) && has(v.x, v.y, v.z - 1)) continue;
+  lists[v.kind].push(v);
+}
+function aoOf(v) {
+  if (has(v.x, v.y + 1, v.z)) return 0.9;
+  let c = 0;
+  for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+    if (dx === 0 && dz === 0) continue;
+    if (has(v.x + dx, v.y + 1, v.z + dz)) c++;
+  }
+  return Math.max(0.5, 1 - 0.075 * c);
+}
+const tmpM = new THREE.Matrix4(), tmpC = new THREE.Color();
+function buildMesh(list, mat, shaded) {
+  const m = new THREE.InstancedMesh(boxGeo, mat, Math.max(1, list.length));
+  m.count = list.length;
+  list.forEach((v, i) => {
+    tmpM.makeTranslation(v.x, v.y, v.z);
+    m.setMatrixAt(i, tmpM);
+    tmpC.setHex(v.c);
+    if (shaded) tmpC.multiplyScalar((0.94 + 0.12 * hash3(v.x, v.y, v.z)) * aoOf(v));
+    m.setColorAt(i, tmpC);
+  });
+  m.instanceMatrix.needsUpdate = true;
+  if (m.instanceColor) m.instanceColor.needsUpdate = true;
+  return m;
+}
+const matMatte = new THREE.MeshStandardMaterial({ roughness: 0.82, metalness: 0, envMapIntensity: 0.35 });
+const matGloss = new THREE.MeshStandardMaterial({ roughness: 0.2, metalness: 0.45, envMapIntensity: 1.0 });
+const matEmis = new THREE.MeshBasicMaterial({ toneMapped: false });
+const meshMatte = buildMesh(lists[0], matMatte, true);
+const meshGloss = buildMesh(lists[1 + 1], matGloss, true);
+const meshEmis = buildMesh(lists[1], matEmis, false);
+meshMatte.castShadow = meshMatte.receiveShadow = true;
+meshGloss.castShadow = meshGloss.receiveShadow = true;
+meshEmis.castShadow = true;
+world.add(meshMatte, meshGloss, meshEmis);
+const emisBase = lists[1].map(v => new THREE.Color(v.c));
+
+// ---------------------------------------------------------------- glow points
+const glowVS = `
+attribute vec3 gcol; attribute vec4 gpar;
+uniform float uT; uniform float uPx; uniform float uPush;
+varying vec3 vC;
+void main(){
+  float tw = 1.0 - gpar.w*(0.5+0.5*sin(6.2831853*(gpar.y*uT/10.0+gpar.z)));
+  vC = gcol*tw;
+  vec4 mv = modelViewMatrix*vec4(position,1.0);
+  mv.xyz += normalize(-mv.xyz)*uPush;
+  gl_Position = projectionMatrix*mv;
+  gl_PointSize = gpar.x*uPx/(-mv.z);
+}`;
+const glowFS = `
+varying vec3 vC;
+void main(){
+  vec2 p = gl_PointCoord*2.0-1.0;
+  float d2 = dot(p,p);
+  if(d2>1.0) discard;
+  float g = max(exp(-d2*4.5)-0.0111,0.0);
+  g += 0.55*exp(-d2*40.0);
+  gl_FragColor = vec4(vC*g,1.0);
+}`;
+const glowMat = new THREE.ShaderMaterial({
+  uniforms: { uT: { value: 0 }, uPx: { value: 1 }, uPush: { value: 0.22 } },
+  vertexShader: glowVS, fragmentShader: glowFS,
+  blending: THREE.AdditiveBlending, depthWrite: false, transparent: true
+});
+{
+  const n = glows.length;
+  const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), par = new Float32Array(n * 4);
+  glows.forEach((g, i) => {
+    pos.set([g.x, g.y, g.z], i * 3);
+    col.set([g.r, g.g, g.b], i * 3);
+    par.set([g.size, g.f, g.p, g.a], i * 4);
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('gcol', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('gpar', new THREE.BufferAttribute(par, 4));
+  const pts = new THREE.Points(geo, glowMat);
+  pts.frustumCulled = false;
+  pts.renderOrder = 2;
+  world.add(pts);
+}
+
+// ---------------------------------------------------------------- lights
+scene.add(new THREE.HemisphereLight(0x9fb6ff, 0x3a3050, 1.5));
+const moon = new THREE.DirectionalLight(0xcfdcff, 2.6);
+moon.castShadow = true;
+moon.shadow.mapSize.set(2048, 2048);
+moon.shadow.camera.left = -8.5; moon.shadow.camera.right = 8.5;
+moon.shadow.camera.top = 8.5; moon.shadow.camera.bottom = -8.5;
+moon.shadow.camera.near = 4; moon.shadow.camera.far = 42;
+moon.shadow.camera.updateProjectionMatrix();
+moon.shadow.bias = -0.0004;
+moon.shadow.normalBias = 0.02;
+scene.add(moon);
+
+const treeLight = new THREE.PointLight(0xffb866, 16, 0, 2); treeLight.position.set(TX, 9, TZ);
+const doorLight = new THREE.PointLight(0xffa040, 6, 0, 2); doorLight.position.set(-9, 6, 4);
+const sideLight = new THREE.PointLight(0xffa040, 3, 0, 2); sideLight.position.set(-1, 5, -7);
+const lampLight = new THREE.PointLight(0xffd29a, 7, 0, 2); lampLight.position.set(LAMP.x, LAMP.y, LAMP.z + 1);
+const starLight = new THREE.PointLight(0xffe3a0, 5, 0, 2); starLight.position.set(TX, 25, TZ + 2);
+world.add(treeLight, doorLight, sideLight, lampLight, starLight);
+
+// ---------------------------------------------------------------- chimney smoke
+const NSM = 7;
+const smoke = new THREE.InstancedMesh(boxGeo, new THREE.MeshStandardMaterial({ color: 0xe4e8f2, roughness: 1, metalness: 0, envMapIntensity: 0.3 }), NSM);
+smoke.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+smoke.frustumCulled = false;
+world.add(smoke);
+
+// ---------------------------------------------------------------- falling snow
+const NS = 900;
+const flakes = [];
+const snowMesh = new THREE.InstancedMesh(boxGeo, new THREE.MeshBasicMaterial({ toneMapped: false }), NS);
+snowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+snowMesh.frustumCulled = false;
+for (let i = 0; i < NS; i++) {
+  const r = 4.55 * Math.sqrt(rnd()), th = rnd() * TAU;
+  const top = Math.sqrt(4.72 * 4.72 - r * r), bottom = -1.62, L = top - bottom;
+  const sp = 0.55 + rnd() * 0.6;
+  flakes.push({
+    x0: r * Math.cos(th), z0: r * Math.sin(th), top, L,
+    k: Math.max(1, Math.round(sp * LEN / L)), ph: rnd(),
+    amp: 0.06 + rnd() * 0.14, m1: 1 + ((rnd() * 3) | 0), m2: 1 + ((rnd() * 3) | 0),
+    p1: rnd(), p2: rnd(), size: 0.045 + rnd() * 0.055
+  });
+  const b = 0.86 + rnd() * 0.14;
+  tmpC.setRGB(b * 0.97, b * 0.985, b);
+  snowMesh.setColorAt(i, tmpC);
+}
+snowMesh.instanceColor.needsUpdate = true;
+scene.add(snowMesh);
+
+// ---------------------------------------------------------------- glass
+const glassVS = `
+varying vec3 vN; varying vec3 vV;
+void main(){
+  vec4 mv = modelViewMatrix*vec4(position,1.0);
+  vN = normalMatrix*normal;
+  vV = -mv.xyz;
+  gl_Position = projectionMatrix*mv;
+}`;
+const glassFS = `
+uniform float uBack;
+varying vec3 vN; varying vec3 vV;
+void main(){
+  vec3 n = normalize(vN); vec3 v = normalize(vV);
+  if(uBack>0.5) n = -n;
+  float ndv = clamp(dot(n,v),0.0,1.0);
+  float f = pow(1.0-ndv,3.2);
+  vec3 col; float a;
+  if(uBack>0.5){
+    a = 0.22*f;
+    col = vec3(0.55,0.7,1.0)*a;
+  } else {
+    a = 0.025+0.55*f;
+    col = mix(vec3(0.5,0.66,1.0),vec3(0.92,0.96,1.0),f)*a;
+    vec3 nc = normalize(vec3(-0.42,0.52,0.74));
+    vec3 ax = normalize(cross(vec3(0.0,1.0,0.0),nc));
+    vec3 ay = cross(nc,ax);
+    vec3 d = n-nc;
+    vec2 q = vec2(dot(d,ax),dot(d,ay));
+    vec2 aq = abs(q);
+    float pane = smoothstep(0.010,0.018,aq.x)*(1.0-smoothstep(0.078,0.088,aq.x))
+               * smoothstep(0.010,0.018,aq.y)*(1.0-smoothstep(0.112,0.124,aq.y));
+    pane *= 0.35+0.3*smoothstep(-0.12,0.12,q.y);
+    float soft = pow(max(dot(n,nc),0.0),40.0)*0.10;
+    vec3 nc2 = normalize(vec3(0.5,-0.55,0.67));
+    float s2 = pow(max(dot(n,nc2),0.0),260.0)*0.35;
+    vec2 dir = normalize(n.xy+vec2(1e-5));
+    float band = smoothstep(0.16,0.26,ndv)*(1.0-smoothstep(0.30,0.42,ndv));
+    float arc1 = band*smoothstep(0.55,0.97,dot(dir,normalize(vec2(-0.72,0.69))))*0.20;
+    float arc2 = band*smoothstep(0.70,0.98,dot(dir,normalize(vec2(0.74,-0.67))))*0.10;
+    col += vec3(1.0)*(pane+soft+arc1)+vec3(1.0,0.85,0.6)*(s2+arc2);
+    a = min(1.0,a+0.6*(pane+arc1)+0.3*(soft+s2+arc2));
+  }
+  gl_FragColor = vec4(col,a);
+}`;
+const sphGeo = new THREE.SphereGeometry(5, 96, 64);
+function glassMat(back) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uBack: { value: back ? 1 : 0 } },
+    vertexShader: glassVS, fragmentShader: glassFS,
+    transparent: true, depthWrite: false, premultipliedAlpha: true,
+    side: back ? THREE.BackSide : THREE.FrontSide
+  });
+}
+const glassBack = new THREE.Mesh(sphGeo, glassMat(true)); glassBack.renderOrder = 1;
+const glassFront = new THREE.Mesh(sphGeo, glassMat(false)); glassFront.renderOrder = 3;
+scene.add(glassBack, glassFront);
+
+// ---------------------------------------------------------------- base
+{
+  const gold = new THREE.MeshStandardMaterial({ color: 0xe2b04a, metalness: 1, roughness: 0.27, envMapIntensity: 1.25, side: THREE.DoubleSide });
+  const lacquer = new THREE.MeshPhysicalMaterial({ color: 0x7d0f1c, roughness: 0.38, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.14, envMapIntensity: 1.0, side: THREE.DoubleSide });
+  const V2 = (x, y) => new THREE.Vector2(x, y);
+  const foot = new THREE.Mesh(new THREE.LatheGeometry([V2(0.001, -5.62), V2(5.0, -5.62), V2(5.08, -5.54), V2(5.08, -5.34), V2(5.0, -5.26), V2(4.9, -5.22)], 96), gold);
+  const bodyPts = [];
+  const rAt = s => 4.48 + 0.42 * Math.pow(1 - s, 2.2);
+  for (let i = 0; i <= 16; i++) { const s = i / 16; bodyPts.push(V2(rAt(s), -5.22 + 2.17 * s)); }
+  const body = new THREE.Mesh(new THREE.LatheGeometry(bodyPts, 96), lacquer);
+  const collar = new THREE.Mesh(new THREE.LatheGeometry([V2(4.48, -3.05), V2(4.62, -3.0), V2(4.66, -2.9), V2(4.66, -2.62), V2(4.58, -2.5), V2(4.42, -2.46), V2(4.34, -2.46)], 96), gold);
+  for (const m of [foot, body, collar]) { m.castShadow = true; m.receiveShadow = true; scene.add(m); }
+  const studGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const emerald = new THREE.MeshStandardMaterial({ color: 0x0f8a45, metalness: 0.5, roughness: 0.2, envMapIntensity: 1.2 });
+  const sy = -4.2, sr = rAt((sy + 5.22) / 2.17) + 0.03;
+  for (let i = 0; i < 28; i++) {
+    const a = i / 28 * TAU;
+    const st = new THREE.Mesh(studGeo, i % 2 ? emerald : gold);
+    st.position.set(Math.sin(a) * sr, sy, Math.cos(a) * sr);
+    st.rotation.set(0, a, Math.PI / 4);
+    scene.add(st);
+  }
+}
+
+// ---------------------------------------------------------------- table, light pool, bokeh
+{
+  const alpha = radialTexture(256, [[0, '#ffffff'], [0.45, '#ffffff'], [0.8, '#555555'], [1, '#000000']]);
+  const table = new THREE.Mesh(new THREE.CircleGeometry(30, 72),
+    new THREE.MeshStandardMaterial({ color: 0x3b2016, roughness: 0.5, metalness: 0, alphaMap: alpha, transparent: true, envMapIntensity: 0.7 }));
+  table.rotation.x = -Math.PI / 2;
+  table.position.y = -5.63;
+  table.receiveShadow = true;
+  table.renderOrder = -1;
+  scene.add(table);
+  const poolTex = radialTexture(256, [[0, '#ffffff'], [0.35, '#8a8a8a'], [0.7, '#2a2a2a'], [1, '#000000']]);
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(11, 48),
+    new THREE.MeshBasicMaterial({ map: poolTex, color: 0xff9a45, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.2, depthWrite: false, toneMapped: false }));
+  pool.rotation.x = -Math.PI / 2;
+  pool.position.y = -5.6;
+  pool.renderOrder = 0;
+  scene.add(pool);
+}
+const bokeh = [];
+{
+  const tex = radialTexture(128, [[0, 'rgba(255,255,255,0.55)'], [0.68, 'rgba(255,255,255,0.6)'], [0.86, 'rgba(255,255,255,0.95)'], [0.94, 'rgba(255,255,255,0.45)'], [1, 'rgba(255,255,255,0)']]);
+  const BC = [0xffc46b, 0xff5a4a, 0x58d68d, 0xfff1d0, 0x6fb7ff, 0xffa23a];
+  for (let i = 0; i < 46; i++) {
+    const ang = rnd() * TAU, rad = 36 + rnd() * 16, y = -3 + rnd() * 12, s = 3 + rnd() * 5;
+    const m = new THREE.SpriteMaterial({ map: tex, color: BC[i % 6], blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.1, toneMapped: false });
+    const sp = new THREE.Sprite(m);
+    sp.position.set(Math.sin(ang) * rad, y, Math.cos(ang) * rad);
+    sp.scale.set(s, s, 1);
+    sp.renderOrder = -2;
+    scene.add(sp);
+    bokeh.push({ m, o: 0.05 + rnd() * 0.1, f: 1 + ((rnd() * 3) | 0), p: rnd() });
+  }
+}
+
+// ---------------------------------------------------------------- frame function
+const vP = new THREE.Vector3(), vS = new THREE.Vector3(), qQ = new THREE.Quaternion(), eE = new THREE.Euler();
+
+function draw(t) {
+  t = ((t % LEN) + LEN) % LEN;
+  const ph = t / LEN;
+
+  // camera orbit: one full turn per loop
+  const a = A0 + TAU * ph;
+  camera.position.set(Math.sin(a) * CAM_R, CAM_H, Math.cos(a) * CAM_R);
+  camera.lookAt(0, -1.2, 0);
+  camera.updateMatrixWorld();
+
+  // key light travels with the camera, upper left
+  const la = a - 0.95;
+  moon.position.set(Math.sin(la) * 13, 15.5, Math.cos(la) * 13);
+
+  // twinkling emissive voxels
+  const el = lists[1];
+  for (let i = 0; i < el.length; i++) {
+    const tw = el[i].tw;
+    let I = 1;
+    if (tw) I = 1 - tw.a * (0.5 + 0.5 * Math.sin(TAU * (tw.f * ph + tw.p)));
+    tmpC.copy(emisBase[i]).multiplyScalar(I);
+    meshEmis.setColorAt(i, tmpC);
+  }
+  if (meshEmis.instanceColor) meshEmis.instanceColor.needsUpdate = true;
+  glowMat.uniforms.uT.value = t;
+  glowMat.uniforms.uPx.value = U * (H / 2) * camera.projectionMatrix.elements[5];
+
+  // warm lights breathe a little
+  treeLight.intensity = 16 * (1 + 0.05 * Math.sin(TAU * 3 * ph) + 0.03 * Math.sin(TAU * 7 * ph + 1));
+  doorLight.intensity = 6 * (1 + 0.06 * Math.sin(TAU * 7 * ph + 2));
+  sideLight.intensity = 3 * (1 + 0.06 * Math.sin(TAU * 7 * ph + 4));
+  lampLight.intensity = 7 * (1 + 0.04 * Math.sin(TAU * 5 * ph + 0.5));
+  starLight.intensity = 5 * (1 - 0.22 * (0.5 + 0.5 * Math.sin(TAU * 2 * ph)));
+
+  // snow
+  for (let i = 0; i < NS; i++) {
+    const fl = flakes[i];
+    const f = frac(fl.ph + fl.k * ph);
+    const y = fl.top - f * fl.L;
+    const x = fl.x0 + fl.amp * Math.sin(TAU * (fl.m1 * ph + fl.p1));
+    const z = fl.z0 + fl.amp * Math.cos(TAU * (fl.m2 * ph + fl.p2));
+    let s = fl.size * sm(0, 0.05, f) * (1 - sm(0.96, 1, f));
+    if (has(Math.round(x / U), Math.round(y / U + CY), Math.round(z / U))) s = 0;
+    vP.set(x, y, z);
+    vS.set(s, s, s);
+    eE.set(TAU * fl.m1 * ph + fl.p1 * 6, TAU * fl.m2 * ph + fl.p2 * 6, 0);
+    qQ.setFromEuler(eE);
+    tmpM.compose(vP, qQ, vS);
+    snowMesh.setMatrixAt(i, tmpM);
+  }
+  snowMesh.instanceMatrix.needsUpdate = true;
+
+  // chimney smoke
+  for (let i = 0; i < NSM; i++) {
+    const p = frac(i / NSM + 2 * ph);
+    const s = Math.pow(Math.max(0, Math.sin(Math.PI * p)), 0.8) * (0.9 + 1.6 * p);
+    vP.set(-11.5 + 2.2 * p * p + 0.35 * Math.sin(TAU * p + i * 1.7), 17.3 + 8.5 * p, -8.5 + 1.0 * p + 0.35 * Math.cos(TAU * p + i * 2.3));
+    vS.set(s, s, s);
+    eE.set(p * 2 + i, p * 3 + i * 2, 0);
+    qQ.setFromEuler(eE);
+    tmpM.compose(vP, qQ, vS);
+    smoke.setMatrixAt(i, tmpM);
+  }
+  smoke.instanceMatrix.needsUpdate = true;
+
+  // background bokeh
+  for (const b of bokeh) b.m.opacity = b.o * (0.8 + 0.2 * Math.sin(TAU * (b.f * ph + b.p)));
+
+  renderer.render(scene, camera);
+  ctx.drawImage(glc, 0, 0, W, H);
+}
+
+window.__length = 10;
+window.__draw = draw;
+
+if (location.search.includes('still')) {
+  draw(5);
+} else {
+  const loop = () => { draw((performance.now() / 1000) % 10); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Snow Globe</title>
+<style>html,body{margin:0;background:#05070d;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+</head><body><canvas id="c" width="800" height="800"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const out=document.getElementById('c'),ctx=out.getContext('2d');
+const gl=document.createElement('canvas');gl.width=800;gl.height=800;
+const R=new THREE.WebGLRenderer({canvas:gl,antialias:true,preserveDrawingBuffer:true});
+R.setSize(800,800,false);R.setPixelRatio(1);R.shadowMap.enabled=true;R.toneMapping=THREE.ACESFilmicToneMapping;R.outputColorSpace=THREE.SRGBColorSpace;
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rand=rng(1225);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x060a16);scene.fog=new THREE.Fog(0x060a16,9,20);
+const cam=new THREE.PerspectiveCamera(38,1,0.1,100);
+scene.add(new THREE.HemisphereLight(0x9fb8ff,0x302018,0.7));
+const key=new THREE.DirectionalLight(0xfff0dd,1.6);key.position.set(3,6,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);
+Object.assign(key.shadow.camera,{left:-3,right:3,top:3,bottom:-3});scene.add(key);
+const warm=new THREE.PointLight(0xffaa55,3,4);warm.position.set(-0.6,0.5,0.5);scene.add(warm);
+// voxels
+const S=0.1,vox=[],glow=[];
+const C=(h)=>new THREE.Color(h);
+function v(x,y,z,c){vox.push([x,y,z,C(c)])}
+function g(x,y,z,c){glow.push([x,y,z,C(c)])}
+const GR=17;
+for(let x=-GR;x<=GR;x++)for(let z=-GR;z<=GR;z++){const d=Math.hypot(x,z);if(d>GR)continue;
+ const h=Math.round(2+Math.cos(d*0.25)*1.2+(rand()<0.15?1:0));
+ for(let y=0;y<h;y++)v(x,y,z,y==h-1?(rand()<0.3?'#e8f0ff':'#ffffff'):'#cfd8ea');}
+const top=(x,z)=>{const d=Math.hypot(x,z);return Math.round(2+Math.cos(d*0.25)*1.2)};
+// tree
+const tx=3,tz=-2,tb=4;
+for(let y=0;y<3;y++)v(tx,tb+y,tz,'#6b3e1f');
+const lightCols=['#ff3030','#ffd040','#40a0ff','#ff60d0','#60ff80'];
+for(let L=0;L<14;L++){const r=Math.round((14-L)*0.45)+1,y=tb+3+L;
+ for(let x=-r;x<=r;x++)for(let z=-r;z<=r;z++){const d=Math.hypot(x,z);if(d>r+0.2)continue;
+  const edge=d>r-1.2;
+  if(edge&&rand()<0.16)g(tx+x,y,tz+z,lightCols[Math.floor(rand()*5)]);
+  else v(tx+x,y,tz+z,edge&&rand()<0.25&&L%3==0?'#f4f8ff':(rand()<0.5?'#1d6b34':'#145a2a'));}}
+const sy=tb+3+14;g(tx,sy,tz,'#ffe070');g(tx,sy+1,tz,'#ffe070');g(tx+1,sy,tz,'#ffe070');g(tx-1,sy,tz,'#ffe070');g(tx,sy-1,tz+1,'#ffe070');
+// house
+const hx=-8,hz=1,hb=4;
+for(let x=0;x<8;x++)for(let z=0;z<6;z++)for(let y=0;y<6;y++){
+ if(x>0&&x<7&&z>0&&z<5)continue;
+ const win=(z==5&&y>=2&&y<=3&&(x==1||x==2||x==5||x==6))||(x==7&&y>=2&&y<=3&&(z==2||z==3));
+ const door=(z==5&&(x==3||x==4)&&y<4);
+ if(win)g(hx+x,hb+y,hz+z,'#ffb84a');else if(door)v(hx+x,hb+y,hz+z,'#7a2a1a');else v(hx+x,hb+y,hz+z,(x+y+z)%2?'#9a5a32':'#8a4e2a');}
+for(let k=0;k<5;k++)for(let x=-1+k;x<=8-k;x++)for(let z=-1;z<=6;z++)if(x==-1+k||x==8-k||k==4)v(hx+x,hb+6+k,hz+z,k>=3||rand()<0.5?'#ffffff':'#b23030');
+for(let y=0;y<3;y++)v(hx+6,hb+9+y,hz+1,'#777');
+// snowman
+const smx=-1,smz=6,smb=5;
+const ball=(cy,r)=>{for(let x=-r;x<=r;x++)for(let y=-r;y<=r;y++)for(let z=-r;z<=r;z++)if(x*x+y*y+z*z<=r*r+0.5)v(smx+x,cy+y,smz+z,'#fbfdff')};
+ball(smb+2,3);ball(smb+6,2);ball(smb+9,1.5);
+v(smx,smb+9,smz+2,'#ff7a1a');v(smx,smb+9,smz+3,'#ff7a1a');v(smx-1,smb+10,smz+1,'#111');v(smx+1,smb+10,smz+1,'#111');
+for(let x=-2;x<=2;x++)v(smx+x,smb+8,smz+1+(Math.abs(x)>1?-1:0),'#c01818');v(smx+2,smb+7,smz+2,'#c01818');v(smx+2,smb+6,smz+2,'#c01818');
+for(let x=-1;x<=1;x++)for(let z=-1;z<=1;z++){v(smx+x,smb+11,smz+z,'#151515');v(smx+x,smb+12,smz+z,'#151515')}
+for(let x=-2;x<=2;x++)for(let z=-2;z<=2;z++)v(smx+x,smb+10.6,smz+z,'#151515');
+v(smx,smb+6,smz+2,'#111');v(smx,smb+4,smz+3,'#111');
+for(let i=1;i<4;i++){v(smx-3-i,smb+6+i*0.6|0,smz,'#5a3418');v(smx+3+i,smb+6+i*0.6|0,smz,'#5a3418')}
+// gifts
+const gift=(x,z,w,h,c,rb)=>{const b=top(x,z);for(let i=0;i<w;i++)for(let k=0;k<w;k++)for(let y=0;y<h;y++)v(x+i,b+y,z+k,(i==w>>1||k==w>>1)?rb:c);v(x+(w>>1),b+h,z+(w>>1),rb)};
+gift(6,1,3,3,'#c62828','#ffd54f');gift(5,4,2,2,'#1e88e5','#ffffff');gift(0,-1,2,3,'#7b1fa2','#ffd54f');
+// small pines
+[[ -10,-7],[10,-8],[-4,-11],[11,4]].forEach(([x,z])=>{const b=top(x,z);v(x,b,z,'#5a3418');for(let L=0;L<6;L++){const r=Math.round((6-L)*0.4);for(let i=-r;i<=r;i++)for(let k=-r;k<=r;k++)if(Math.abs(i)+Math.abs(k)<=r)v(x+i,b+1+L,z+k,L%2?'#ffffff':'#1a6030')}});
+const geo=new THREE.BoxGeometry(S,S,S);
+const m4=new THREE.Matrix4();
+const vm=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({roughness:0.8}),vox.length);
+vox.forEach((p,i)=>{m4.makeTranslation(p[0]*S,p[1]*S-1.0,p[2]*S);vm.setMatrixAt(i,m4);vm.setColorAt(i,p[3])});
+vm.castShadow=vm.receiveShadow=true;scene.add(vm);
+const gm=new THREE.InstancedMesh(geo,new THREE.MeshBasicMaterial({toneMapped:false}),glow.length);
+glow.forEach((p,i)=>{m4.makeTranslation(p[0]*S,p[1]*S-1.0,p[2]*S);gm.setMatrixAt(i,m4)});scene.add(gm);
+const phase=glow.map(()=>Math.floor(rand()*4)),tmpC=new THREE.Color();
+// glass
+const RAD=2.05;
+const glass=new THREE.Mesh(new THREE.SphereGeometry(RAD,96,64),new THREE.MeshPhysicalMaterial({color:0xddeeff,roughness:0.03,metalness:0,transparent:true,opacity:0.14,clearcoat:1,side:THREE.FrontSide,depthWrite:false,envMapIntensity:1}));
+glass.position.y=-0.2;scene.add(glass);
+const rim=new THREE.Mesh(new THREE.SphereGeometry(RAD*1.003,96,64),new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+ vertexShader:'varying vec3 n;varying vec3 vd;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);vd=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+ fragmentShader:'varying vec3 n;varying vec3 vd;void main(){float f=pow(1.-abs(dot(n,vd)),3.);float s=pow(max(dot(reflect(-vd,n),normalize(vec3(.5,.8,.4))),0.),60.);gl_FragColor=vec4(vec3(.6,.75,1.)*f*.9+vec3(s),1.);}'}));
+rim.position.y=-0.2;scene.add(rim);
+// base
+const wood=new THREE.MeshStandardMaterial({color:0x5a2a14,roughness:0.5,metalness:0.1});
+const gold=new THREE.MeshStandardMaterial({color:0xd4a640,roughness:0.25,metalness:1});
+const b1=new THREE.Mesh(new THREE.CylinderGeometry(1.75,2.1,0.7,64),wood);b1.position.y=-1.55;scene.add(b1);
+const b2=new THREE.Mesh(new THREE.TorusGeometry(1.78,0.06,16,96),gold);b2.rotation.x=Math.PI/2;b2.position.y=-1.2;scene.add(b2);
+const b3=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.25,0.18,64),wood);b3.position.y=-1.98;scene.add(b3);
+const b4=new THREE.Mesh(new THREE.TorusGeometry(2.12,0.05,16,96),gold);b4.rotation.x=Math.PI/2;b4.position.y=-1.88;scene.add(b4);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(8,64),new THREE.MeshStandardMaterial({color:0x1a1420,roughness:0.9}));floor.rotation.x=-Math.PI/2;floor.position.y=-2.07;floor.receiveShadow=true;scene.add(floor);
+b1.castShadow=b3.castShadow=true;
+// snow
+const N=900,H=3.6,sp=[],pos=new Float32Array(N*3);
+for(let i=0;i<N;i++){const a=rand()*6.283,r=Math.sqrt(rand())*1.9;sp.push({x:Math.cos(a)*r,z:Math.sin(a)*r,y0:rand()*H,k:1+Math.floor(rand()*2),w:rand()*6.283,amp:0.03+rand()*0.06})}
+const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+const sc=document.createElement('canvas');sc.width=sc.height=32;const sx=sc.getContext('2d');const gr=sx.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(0.5,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(255,255,255,0)');sx.fillStyle=gr;sx.fillRect(0,0,32,32);
+const snow=new THREE.Points(sg,new THREE.PointsMaterial({size:0.045,map:new THREE.CanvasTexture(sc),transparent:true,depthWrite:false,color:0xffffff}));scene.add(snow);
+// background stars
+const st=new Float32Array(600*3);for(let i=0;i<600;i++){const a=rand()*6.283,e=rand()*1.2+0.1,r=30;st[i*3]=Math.cos(a)*Math.cos(e)*r;st[i*3+1]=Math.sin(e)*r-3;st[i*3+2]=Math.sin(a)*Math.cos(e)*r}
+const stg=new THREE.BufferGeometry();stg.setAttribute('position',new THREE.BufferAttribute(st,3));scene.add(new THREE.Points(stg,new THREE.PointsMaterial({size:0.08,color:0xaabbff})));
+const TAU=Math.PI*2;
+window.__length=10;
+window.__draw=function(t){
+ const a=TAU*t/10;cam.position.set(Math.sin(a)*6.4,1.3+0.25*Math.sin(a),Math.cos(a)*6.4);cam.lookAt(0,-0.35,0);
+ for(let i=0;i<N;i++){const p=sp[i];let y=(p.y0-p.k*H*t/10)%H;if(y<0)y+=H;y=y-1.4;
+  const x=p.x+Math.sin(p.w+a*p.k)*p.amp,z=p.z+Math.cos(p.w+a)*p.amp;
+  const inside=x*x+(y+0.2)*(y+0.2)+z*z<(RAD-0.08)**2;pos[i*3]=x;pos[i*3+1]=inside?y:-50;pos[i*3+2]=z}
+ sg.attributes.position.needsUpdate=true;
+ glow.forEach((p,i)=>{const on=0.55+0.45*Math.sin(TAU*(t/10*5)+phase[i]*1.57);tmpC.copy(p[3]).multiplyScalar(0.4+on*1.6);gm.setColorAt(i,tmpC)});
+ gm.instanceColor.needsUpdate=true;
+ warm.intensity=2.6+0.4*Math.sin(TAU*t/10*7);
+ R.render(scene,cam);ctx.drawImage(gl,0,0,800,800);
+};
+if(location.search.includes('still'))window.__draw(5);
+else{const loop=()=>{window.__draw((performance.now()/1000)%10);requestAnimationFrame(loop)};loop();}
+</script></body></html>
