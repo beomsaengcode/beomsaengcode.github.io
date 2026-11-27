@@ -55,6 +55,23 @@ button.x{background:var(--panel);color:var(--fg);border:1px solid var(--line);bo
 <p>토큰은 실행 기록에 호출마다 적힌 값을 더했어요. 값은 출력 토큰을 API 정가(Fable 100만 토큰당 $40, Opus $20)로 환산한 거예요.</p>
 <p>칸마다 한 번씩만 만들었어요. 다시 하면 그림도 숫자도 달라질 수 있어요.</p>
 
+<h2>max는 생각만 하다 끊겼어요</h2>
+<p>호출 한 번에 쓸 수 있는 출력은 128,000토큰까지예요. 생각도 출력에 들어가요.</p>
+<p>Fable max는 첫 호출에서 128,000토큰을 전부 생각에 쓰고 한도에 걸렸어요. 코드는 한 줄도 못 썼어요. 다시 불러서 72,000토큰쯤 더 생각한 뒤에 파일을 썼어요. 그래서 합계가 200,226토큰이고, 값도 합계만큼 나가요.</p>
+<p>Opus max도 첫 호출이 똑같이 128,000토큰에서 끊겼어요.</p>
+<div class="wrap"><table><thead><tr><th>숫자</th><th>뜻</th></tr></thead><tbody>
+<tr><td>128,000</td><td style="text-align:left;white-space:normal">호출 한 번의 출력 한도</td></tr>
+<tr><td>200,226</td><td style="text-align:left;white-space:normal">Fable max가 완성까지 여러 번 호출하며 쓴 생각 토큰 합계</td></tr>
+</tbody></table></div>
+
+<h2>한도에 걸리면</h2>
+<p>그 호출은 거기서 끝나고, 멈춘 이유가 <span class="mono">max_tokens</span>로 돌아와요. 그때까지 쓴 토큰 값은 그대로 내요. 저절로 이어 쓰지는 않아요.</p>
+<p>이어 가려면 끊긴 내용을 대화에 붙여 한 번 더 불러야 해요. Claude Code는 이걸 알아서 해 줘요. API로 직접 만들 때는 내 코드에 넣어야 해요.</p>
+<p><b style="color:var(--fg)">막는 방법 3가지</b></p>
+<p>1. 생각 강도를 낮춰요. high에서는 한 번도 안 걸렸어요.</p>
+<p>2. 일을 쪼개요. 설계 한 번, 코드 한 번으로 나눠요.</p>
+<p>3. 멈춘 이유가 <span class="mono">max_tokens</span>인지 확인하고 다시 부르는 코드를 넣어요.</p>
+
 <h2>준 주문 (줄여 적음, 8칸 모두 같음)</h2>
 <pre class="mono">Build one self-contained HTML file. One shot.
 
